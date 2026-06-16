@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+
 import type {
   PredictionBlock,
   PredictionBlockItem
 } from '../../../shared/types/Prediction'
+
 import { slugify } from '../../../shared/utils/slugify'
 import './AdminForm.css'
 
@@ -12,14 +14,34 @@ import {
   updatePrediction
 } from '../../../services/predictionService'
 
+import {
+  getCompetitions,
+  getTeamsByCompetition
+} from '../../../services/contentService'
+
+type Competition = {
+  _id: string
+  name: string
+}
+
+type Team = {
+  _id: string
+  name: string
+  logo: string
+  competitionId: string
+}
+
 export default function EditPredictionPage() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const [competition, setCompetition] = useState('')
+  const [competitions, setCompetitions] = useState<Competition[]>([])
+  const [teams, setTeams] = useState<Team[]>([])
+
+  const [competitionId, setCompetitionId] = useState('')
+  const [homeTeamId, setHomeTeamId] = useState('')
+  const [awayTeamId, setAwayTeamId] = useState('')
   const [date, setDate] = useState('')
-  const [homeTeam, setHomeTeam] = useState('')
-  const [awayTeam, setAwayTeam] = useState('')
 
   const [homeProbability, setHomeProbability] = useState(50)
   const [drawProbability, setDrawProbability] = useState(25)
@@ -33,33 +55,88 @@ export default function EditPredictionPage() {
   const [itemLabel, setItemLabel] = useState('')
   const [itemValue, setItemValue] = useState('')
 
+  const [saving, setSaving] = useState(false)
+
   useEffect(() => {
-    loadPrediction()
+    loadPageData()
   }, [])
 
-  async function loadPrediction() {
+  async function loadPageData() {
+    if (!id) return
+
     try {
-      if (!id) return
+      const [prediction, competitionsData] = await Promise.all([
+        getPredictionById(id),
+        getCompetitions()
+      ])
 
-      const prediction = await getPredictionById(id)
+      setCompetitions(competitionsData)
 
-      setCompetition(prediction.competition || '')
+      const currentCompetitionId =
+        prediction.competitionId ||
+        competitionsData.find(
+          (competition: Competition) =>
+            competition.name === prediction.competition
+        )?._id ||
+        ''
+
+      setCompetitionId(currentCompetitionId)
       setDate(prediction.date || '')
-      setHomeTeam(prediction.homeTeam || '')
-      setAwayTeam(prediction.awayTeam || '')
 
-      setHomeProbability(prediction.homeProbability || 50)
-      setDrawProbability(prediction.drawProbability || 25)
-      setAwayProbability(prediction.awayProbability || 25)
+      setHomeTeamId(prediction.homeTeamId || '')
+      setAwayTeamId(prediction.awayTeamId || '')
+
+      setHomeProbability(prediction.homeProbability ?? 50)
+      setDrawProbability(prediction.drawProbability ?? 25)
+      setAwayProbability(prediction.awayProbability ?? 25)
 
       setBlocks(prediction.blocks || [])
+
+      if (currentCompetitionId) {
+        const teamsData = await getTeamsByCompetition(currentCompetitionId)
+        setTeams(teamsData)
+
+        if (!prediction.homeTeamId) {
+          const home = teamsData.find(
+            (team: Team) => team.name === prediction.homeTeam
+          )
+
+          if (home) setHomeTeamId(home._id)
+        }
+
+        if (!prediction.awayTeamId) {
+          const away = teamsData.find(
+            (team: Team) => team.name === prediction.awayTeam
+          )
+
+          if (away) setAwayTeamId(away._id)
+        }
+      }
     } catch (error) {
       console.error(error)
+      alert('Error cargando predicción')
+    }
+  }
+
+  async function handleCompetitionChange(id: string) {
+    setCompetitionId(id)
+    setHomeTeamId('')
+    setAwayTeamId('')
+    setTeams([])
+
+    if (!id) return
+
+    try {
+      const data = await getTeamsByCompetition(id)
+      setTeams(data)
+    } catch (error) {
+      console.error(error)
+      alert('Error cargando equipos')
     }
   }
 
   function addItem() {
-    if (!itemLabel || !itemValue) {
+    if (!itemLabel.trim() || !itemValue.trim()) {
       alert('Completá dato y valor')
       return
     }
@@ -76,8 +153,12 @@ export default function EditPredictionPage() {
     setItemValue('')
   }
 
+  function removeItem(index: number) {
+    setItems(items.filter((_, i) => i !== index))
+  }
+
   function addBlock() {
-    if (!blockTitle) {
+    if (!blockTitle.trim()) {
       alert('Completá el título del bloque')
       return
     }
@@ -101,8 +182,14 @@ export default function EditPredictionPage() {
     setItemValue('')
   }
 
+  function removeBlock(index: number) {
+    setBlocks(blocks.filter((_, i) => i !== index))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    if (!id) return
 
     const total =
       homeProbability +
@@ -114,35 +201,64 @@ export default function EditPredictionPage() {
       return
     }
 
-    if (!competition || !date || !homeTeam || !awayTeam) {
+    if (!competitionId || !homeTeamId || !awayTeamId || !date) {
       alert('Completá todos los campos')
       return
     }
 
-    const updatedPrediction = {
-      competition,
-      date,
+    if (homeTeamId === awayTeamId) {
+      alert('El equipo local y visitante no pueden ser el mismo')
+      return
+    }
 
-      homeTeam,
-      awayTeam,
+    const competition = competitions.find(
+      (competition) => competition._id === competitionId
+    )
+
+    const home = teams.find((team) => team._id === homeTeamId)
+    const away = teams.find((team) => team._id === awayTeamId)
+
+    if (!competition || !home || !away) {
+      alert('Datos inválidos')
+      return
+    }
+
+    const updatedPrediction = {
+      slug: slugify(`${home.name} vs ${away.name}`),
+
+      competition: competition.name,
+      competitionId,
+
+      homeTeam: home.name,
+      awayTeam: away.name,
+
+      homeTeamId,
+      awayTeamId,
+
+      homeLogo: home.logo,
+      awayLogo: away.logo,
+
+      date,
 
       homeProbability,
       drawProbability,
       awayProbability,
 
-      blocks,
-
-      slug: slugify(`${homeTeam} vs ${awayTeam}`)
+      blocks
     }
 
     try {
-      await updatePrediction(id!, updatedPrediction)
+      setSaving(true)
+
+      await updatePrediction(id, updatedPrediction)
 
       alert('Predicción actualizada')
-
       navigate('/admin/predicciones')
     } catch (error) {
       console.error(error)
+      alert('Error actualizando predicción')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -153,10 +269,18 @@ export default function EditPredictionPage() {
       <form onSubmit={handleSubmit} className="admin-form">
         <label>
           Competición
-          <input
-            value={competition}
-            onChange={(e) => setCompetition(e.target.value)}
-          />
+          <select
+            value={competitionId}
+            onChange={(e) => handleCompetitionChange(e.target.value)}
+          >
+            <option value="">Seleccionar competición</option>
+
+            {competitions.map((competition) => (
+              <option key={competition._id} value={competition._id}>
+                {competition.name}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label>
@@ -170,18 +294,34 @@ export default function EditPredictionPage() {
 
         <label>
           Equipo local
-          <input
-            value={homeTeam}
-            onChange={(e) => setHomeTeam(e.target.value)}
-          />
+          <select
+            value={homeTeamId}
+            onChange={(e) => setHomeTeamId(e.target.value)}
+          >
+            <option value="">Seleccionar equipo</option>
+
+            {teams.map((team) => (
+              <option key={team._id} value={team._id}>
+                {team.name}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label>
           Equipo visitante
-          <input
-            value={awayTeam}
-            onChange={(e) => setAwayTeam(e.target.value)}
-          />
+          <select
+            value={awayTeamId}
+            onChange={(e) => setAwayTeamId(e.target.value)}
+          >
+            <option value="">Seleccionar equipo</option>
+
+            {teams.map((team) => (
+              <option key={team._id} value={team._id}>
+                {team.name}
+              </option>
+            ))}
+          </select>
         </label>
 
         <h2>Probabilidades</h2>
@@ -218,6 +358,10 @@ export default function EditPredictionPage() {
             }
           />
         </label>
+
+        <p>
+          Total: {homeProbability + drawProbability + awayProbability}%
+        </p>
 
         <h2>Bloques de datos</h2>
 
@@ -257,6 +401,13 @@ export default function EditPredictionPage() {
         {items.map((item, index) => (
           <p key={`${item.label}-${index}`}>
             {item.label}: {item.value}
+
+            <button
+              type="button"
+              onClick={() => removeItem(index)}
+            >
+              Eliminar
+            </button>
           </p>
         ))}
 
@@ -264,19 +415,13 @@ export default function EditPredictionPage() {
           Agregar bloque
         </button>
 
+        <p>Bloques creados: {blocks.length}</p>
+
         {blocks.length === 0 ? (
           <p>No hay bloques cargados.</p>
         ) : (
           blocks.map((block, index) => (
-            <div
-              key={`${block.title}-${index}`}
-              style={{
-                border: '1px solid #334155',
-                borderRadius: '8px',
-                padding: '1rem',
-                marginBottom: '1rem'
-              }}
-            >
+            <div key={`${block.title}-${index}`} className="section-preview">
               <strong>{block.title}</strong>
 
               {block.items.map((item, itemIndex) => (
@@ -287,11 +432,7 @@ export default function EditPredictionPage() {
 
               <button
                 type="button"
-                onClick={() =>
-                  setBlocks(
-                    blocks.filter((_, i) => i !== index)
-                  )
-                }
+                onClick={() => removeBlock(index)}
               >
                 Eliminar bloque
               </button>
@@ -299,8 +440,8 @@ export default function EditPredictionPage() {
           ))
         )}
 
-        <button type="submit">
-          Guardar cambios
+        <button type="submit" disabled={saving}>
+          {saving ? 'Guardando...' : 'Guardar cambios'}
         </button>
       </form>
     </div>

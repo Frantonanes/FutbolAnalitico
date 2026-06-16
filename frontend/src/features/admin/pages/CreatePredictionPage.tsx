@@ -43,6 +43,7 @@ export default function CreatePredictionPage() {
 
   const [itemLabel, setItemLabel] = useState('')
   const [itemValue, setItemValue] = useState('')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     loadCompetitions()
@@ -118,6 +119,10 @@ export default function CreatePredictionPage() {
 
     const total = homeProbability + drawProbability + awayProbability
 
+    if (homeTeamId === awayTeamId) {
+      alert('El equipo local y visitante no pueden ser el mismo')
+      return
+    }
     if (total !== 100) {
       alert('Las probabilidades deben sumar 100%')
       return
@@ -166,6 +171,7 @@ export default function CreatePredictionPage() {
       setAwayTeamId('')
       setDate('')
 
+      setTeams([])
       setBlocks([])
       setItems([])
       setBlockTitle('')
@@ -315,7 +321,9 @@ export default function CreatePredictionPage() {
           </div>
         ))}
 
-        <button type="submit">Crear predicción</button>
+        <button type="submit" disabled={saving}>
+          {saving ? 'Creando...' : 'Crear predicción'}
+        </button>
       </form>
     </div>
   )
