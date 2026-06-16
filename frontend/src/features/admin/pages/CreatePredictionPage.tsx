@@ -48,6 +48,9 @@ export default function CreatePredictionPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
+  const [homeTeamSearch, setHomeTeamSearch] = useState('')
+  const [awayTeamSearch, setAwayTeamSearch] = useState('')
+
   const homeTeam = teams.find(
     (team) => team._id === homeTeamId
   )
@@ -55,6 +58,18 @@ export default function CreatePredictionPage() {
   const awayTeam = teams.find(
     (team) => team._id === awayTeamId
   )
+
+  const filteredHomeTeams = teams.filter((team) =>
+  team.name
+    .toLowerCase()
+    .includes(homeTeamSearch.toLowerCase())
+)
+
+const filteredAwayTeams = teams.filter((team) =>
+  team.name
+    .toLowerCase()
+    .includes(awayTeamSearch.toLowerCase())
+)
 
   useEffect(() => {
     loadCompetitions()
@@ -79,6 +94,8 @@ export default function CreatePredictionPage() {
     setCompetitionId(id)
     setHomeTeamId('')
     setAwayTeamId('')
+    setHomeTeamSearch('')
+    setAwayTeamSearch('')
     setTeams([])
 
     if (!id) return
@@ -256,6 +273,8 @@ export default function CreatePredictionPage() {
       setDate('')
       setTeams([])
       setBlocks([])
+      setHomeTeamSearch('')
+      setAwayTeamSearch('')
       setBlockTitle('')
       setBlockText('')
       setHomeProbability(50)
@@ -321,28 +340,40 @@ export default function CreatePredictionPage() {
         </label>
 
         <label>
-          Equipo local
-          <select
-            value={homeTeamId}
-            onChange={(e) =>
-              setHomeTeamId(e.target.value)
-            }
-            disabled={!competitionId}
-          >
-            <option value="">
-              Seleccionar equipo
-            </option>
+  Buscar equipo local
+  <input
+    placeholder="Ej: Argentina"
+    value={homeTeamSearch}
+    onChange={(e) =>
+      setHomeTeamSearch(e.target.value)
+    }
+    disabled={!competitionId}
+  />
+</label>
 
-            {teams.map((team) => (
-              <option
-                key={team._id}
-                value={team._id}
-              >
-                {team.name}
-              </option>
-            ))}
-          </select>
-        </label>
+<label>
+  Equipo local
+  <select
+    value={homeTeamId}
+    onChange={(e) =>
+      setHomeTeamId(e.target.value)
+    }
+    disabled={!competitionId}
+  >
+    <option value="">
+      Seleccionar equipo
+    </option>
+
+    {filteredHomeTeams.map((team) => (
+      <option
+        key={team._id}
+        value={team._id}
+      >
+        {team.name}
+      </option>
+    ))}
+  </select>
+</label>
 
         {homeTeam?.logo && (
           <img
@@ -352,29 +383,41 @@ export default function CreatePredictionPage() {
           />
         )}
 
-        <label>
-          Equipo visitante
-          <select
-            value={awayTeamId}
-            onChange={(e) =>
-              setAwayTeamId(e.target.value)
-            }
-            disabled={!competitionId}
-          >
-            <option value="">
-              Seleccionar equipo
-            </option>
+<label>
+  Buscar equipo visitante
+  <input
+    placeholder="Ej: Brasil"
+    value={awayTeamSearch}
+    onChange={(e) =>
+      setAwayTeamSearch(e.target.value)
+    }
+    disabled={!competitionId}
+  />
+</label>
 
-            {teams.map((team) => (
-              <option
-                key={team._id}
-                value={team._id}
-              >
-                {team.name}
-              </option>
-            ))}
-          </select>
-        </label>
+<label>
+  Equipo visitante
+  <select
+    value={awayTeamId}
+    onChange={(e) =>
+      setAwayTeamId(e.target.value)
+    }
+    disabled={!competitionId}
+  >
+    <option value="">
+      Seleccionar equipo
+    </option>
+
+    {filteredAwayTeams.map((team) => (
+      <option
+        key={team._id}
+        value={team._id}
+      >
+        {team.name}
+      </option>
+    ))}
+  </select>
+</label>
 
         {awayTeam?.logo && (
           <img
