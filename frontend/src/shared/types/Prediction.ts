@@ -8,6 +8,10 @@ export type PredictionBlock = {
   items: PredictionBlockItem[]
 }
 
+export type PredictionStatus =
+  | 'pending'
+  | 'finished'
+
 export type Prediction = {
   _id?: string
   id?: string
@@ -28,11 +32,14 @@ export type Prediction = {
 
   date: string
 
+  status?: PredictionStatus
+  finalScore?: string
+
   homeProbability: number
   drawProbability: number
   awayProbability: number
 
   blocks: PredictionBlock[]
 
-  createdAt: string
+  createdAt?: string
 }

@@ -5,8 +5,7 @@ import {
 } from 'react-router-dom'
 
 import type {
-  PredictionBlock,
-  PredictionBlockItem
+  PredictionBlock
 } from '../../../shared/types/Prediction'
 
 import { slugify } from '../../../shared/utils/slugify'
@@ -47,6 +46,10 @@ export default function EditPredictionPage() {
   const [awayTeamId, setAwayTeamId] = useState('')
   const [date, setDate] = useState('')
 
+  const [status, setStatus] =
+    useState<'pending' | 'finished'>('pending')
+  const [finalScore, setFinalScore] = useState('')
+
   const [homeProbability, setHomeProbability] =
     useState(50)
   const [drawProbability, setDrawProbability] =
@@ -56,12 +59,9 @@ export default function EditPredictionPage() {
 
   const [blocks, setBlocks] =
     useState<PredictionBlock[]>([])
-  const [blockTitle, setBlockTitle] = useState('')
-  const [items, setItems] =
-    useState<PredictionBlockItem[]>([])
 
-  const [itemLabel, setItemLabel] = useState('')
-  const [itemValue, setItemValue] = useState('')
+  const [blockTitle, setBlockTitle] = useState('')
+  const [blockText, setBlockText] = useState('')
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -103,6 +103,9 @@ export default function EditPredictionPage() {
 
       setCompetitionId(currentCompetitionId)
       setDate(prediction.date || '')
+
+      setStatus(prediction.status || 'pending')
+      setFinalScore(prediction.finalScore || '')
 
       setHomeTeamId(prediction.homeTeamId || '')
       setAwayTeamId(prediction.awayTeamId || '')
@@ -172,28 +175,36 @@ export default function EditPredictionPage() {
     }
   }
 
-  function addItem() {
-    if (!itemLabel.trim() || !itemValue.trim()) {
-      alert('Completá dato y valor')
-      return
-    }
+  function parseBlockText(text: string) {
+    return text
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const separatorIndex = line.indexOf(':')
 
-    setItems([
-      ...items,
-      {
-        label: itemLabel.trim(),
-        value: itemValue.trim()
-      }
-    ])
+        if (separatorIndex === -1) {
+          return null
+        }
 
-    setItemLabel('')
-    setItemValue('')
-  }
+        const label = line
+          .slice(0, separatorIndex)
+          .trim()
 
-  function removeItem(index: number) {
-    setItems(
-      items.filter((_, i) => i !== index)
-    )
+        const value = line
+          .slice(separatorIndex + 1)
+          .trim()
+
+        if (!label || !value) {
+          return null
+        }
+
+        return {
+          label,
+          value
+        }
+      })
+      .filter((item) => item !== null)
   }
 
   function addBlock() {
@@ -202,8 +213,12 @@ export default function EditPredictionPage() {
       return
     }
 
-    if (items.length === 0) {
-      alert('Agregá al menos un dato')
+    const parsedItems = parseBlockText(blockText)
+
+    if (parsedItems.length === 0) {
+      alert(
+        'Pegá datos con el formato: Goles: 2.8'
+      )
       return
     }
 
@@ -211,14 +226,12 @@ export default function EditPredictionPage() {
       ...blocks,
       {
         title: blockTitle.trim(),
-        items
+        items: parsedItems
       }
     ])
 
     setBlockTitle('')
-    setItems([])
-    setItemLabel('')
-    setItemValue('')
+    setBlockText('')
   }
 
   function removeBlock(index: number) {
@@ -258,6 +271,14 @@ export default function EditPredictionPage() {
 
     if (!date) {
       alert('Seleccioná una fecha')
+      return
+    }
+
+    if (
+      status === 'finished' &&
+      !finalScore.trim()
+    ) {
+      alert('Ingresá el resultado final')
       return
     }
 
@@ -321,6 +342,12 @@ export default function EditPredictionPage() {
         awayLogo: away.logo,
 
         date,
+
+        status,
+        finalScore:
+          status === 'finished'
+            ? finalScore.trim()
+            : '',
 
         homeProbability,
         drawProbability,
@@ -391,6 +418,38 @@ export default function EditPredictionPage() {
             }
           />
         </label>
+
+        <label>
+          Estado del partido
+          <select
+            value={status}
+            onChange={(e) =>
+              setStatus(
+                e.target.value as
+                  | 'pending'
+                  | 'finished'
+              )
+            }
+          >
+            <option value="pending">
+              Pendiente
+            </option>
+
+            <option value="finished">
+              Partido finalizado
+            </option>
+          </select>
+        </label>
+
+        {status === 'finished' && (
+          <input
+            placeholder="Resultado final. Ej: Argentina 2 - 1 Brasil"
+            value={finalScore}
+            onChange={(e) =>
+              setFinalScore(e.target.value)
+            }
+          />
+        )}
 
         <label>
           Equipo local
@@ -524,51 +583,22 @@ export default function EditPredictionPage() {
           />
         </label>
 
-        <label>
-          Dato
-          <input
-            placeholder="Ej: Goles"
-            value={itemLabel}
-            onChange={(e) =>
-              setItemLabel(e.target.value)
-            }
-          />
-        </label>
+        <textarea
+          placeholder={`Pegá los datos así:
 
-        <label>
-          Valor
-          <input
-            placeholder="Ej: 3.4"
-            value={itemValue}
-            onChange={(e) =>
-              setItemValue(e.target.value)
-            }
-          />
-        </label>
-
-        <button
-          type="button"
-          onClick={addItem}
-        >
-          Agregar dato
-        </button>
-
-        <p>Datos en este bloque: {items.length}</p>
-
-        {items.map((item, index) => (
-          <p key={`${item.label}-${index}`}>
-            {item.label}: {item.value}
-
-            <button
-              type="button"
-              onClick={() =>
-                removeItem(index)
-              }
-            >
-              Eliminar
-            </button>
-          </p>
-        ))}
+Goles: 2.8
+Tiros totales: 24
+Tiros a puerta: 10
+Corners: 9
+Tarjetas: 4
+Penales: 0.25
+Faltas: 24`}
+          value={blockText}
+          onChange={(e) =>
+            setBlockText(e.target.value)
+          }
+          rows={9}
+        />
 
         <button
           type="button"

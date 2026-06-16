@@ -5,8 +5,7 @@ import {
   getTeamsByCompetition
 } from '../../../services/contentService'
 import type {
-  PredictionBlock,
-  PredictionBlockItem
+  PredictionBlock
 } from '../../../shared/types/Prediction'
 import { slugify } from '../../../shared/utils/slugify'
 import './AdminForm.css'
@@ -24,7 +23,8 @@ type Team = {
 }
 
 export default function CreatePredictionPage() {
-  const [competitions, setCompetitions] = useState<Competition[]>([])
+  const [competitions, setCompetitions] =
+    useState<Competition[]>([])
   const [teams, setTeams] = useState<Team[]>([])
 
   const [competitionId, setCompetitionId] = useState('')
@@ -32,22 +32,29 @@ export default function CreatePredictionPage() {
   const [awayTeamId, setAwayTeamId] = useState('')
   const [date, setDate] = useState('')
 
-  const [homeProbability, setHomeProbability] = useState(50)
-  const [drawProbability, setDrawProbability] = useState(25)
-  const [awayProbability, setAwayProbability] = useState(25)
+  const [homeProbability, setHomeProbability] =
+    useState(50)
+  const [drawProbability, setDrawProbability] =
+    useState(25)
+  const [awayProbability, setAwayProbability] =
+    useState(25)
 
-  const [blocks, setBlocks] = useState<PredictionBlock[]>([])
+  const [blocks, setBlocks] =
+    useState<PredictionBlock[]>([])
+
   const [blockTitle, setBlockTitle] = useState('')
-  const [items, setItems] = useState<PredictionBlockItem[]>([])
-
-  const [itemLabel, setItemLabel] = useState('')
-  const [itemValue, setItemValue] = useState('')
+  const [blockText, setBlockText] = useState('')
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  const homeTeam = teams.find((team) => team._id === homeTeamId)
-  const awayTeam = teams.find((team) => team._id === awayTeamId)
+  const homeTeam = teams.find(
+    (team) => team._id === homeTeamId
+  )
+
+  const awayTeam = teams.find(
+    (team) => team._id === awayTeamId
+  )
 
   useEffect(() => {
     loadCompetitions()
@@ -78,6 +85,7 @@ export default function CreatePredictionPage() {
 
     try {
       const data = await getTeamsByCompetition(id)
+
       setTeams(data)
     } catch (error) {
       console.error(error)
@@ -85,22 +93,36 @@ export default function CreatePredictionPage() {
     }
   }
 
-  function addItem() {
-    if (!itemLabel.trim() || !itemValue.trim()) {
-      alert('Completá dato y valor')
-      return
-    }
+  function parseBlockText(text: string) {
+    return text
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const separatorIndex = line.indexOf(':')
 
-    setItems([
-      ...items,
-      {
-        label: itemLabel.trim(),
-        value: itemValue.trim()
-      }
-    ])
+        if (separatorIndex === -1) {
+          return null
+        }
 
-    setItemLabel('')
-    setItemValue('')
+        const label = line
+          .slice(0, separatorIndex)
+          .trim()
+
+        const value = line
+          .slice(separatorIndex + 1)
+          .trim()
+
+        if (!label || !value) {
+          return null
+        }
+
+        return {
+          label,
+          value
+        }
+      })
+      .filter((item) => item !== null)
   }
 
   function addBlock() {
@@ -109,8 +131,12 @@ export default function CreatePredictionPage() {
       return
     }
 
-    if (items.length === 0) {
-      alert('Agregá al menos un dato')
+    const parsedItems = parseBlockText(blockText)
+
+    if (parsedItems.length === 0) {
+      alert(
+        'Pegá datos con el formato: Goles: 2.8'
+      )
       return
     }
 
@@ -118,14 +144,12 @@ export default function CreatePredictionPage() {
       ...blocks,
       {
         title: blockTitle.trim(),
-        items
+        items: parsedItems
       }
     ])
 
     setBlockTitle('')
-    setItems([])
-    setItemLabel('')
-    setItemValue('')
+    setBlockText('')
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -147,7 +171,9 @@ export default function CreatePredictionPage() {
     }
 
     if (homeTeamId === awayTeamId) {
-      alert('El equipo local y visitante no pueden ser el mismo')
+      alert(
+        'El equipo local y visitante no pueden ser el mismo'
+      )
       return
     }
 
@@ -164,7 +190,9 @@ export default function CreatePredictionPage() {
       drawProbability > 100 ||
       awayProbability > 100
     ) {
-      alert('Las probabilidades deben estar entre 0 y 100')
+      alert(
+        'Las probabilidades deben estar entre 0 y 100'
+      )
       return
     }
 
@@ -210,6 +238,9 @@ export default function CreatePredictionPage() {
 
         date,
 
+        status: 'pending',
+        finalScore: '',
+
         homeProbability,
         drawProbability,
         awayProbability,
@@ -225,10 +256,8 @@ export default function CreatePredictionPage() {
       setDate('')
       setTeams([])
       setBlocks([])
-      setItems([])
       setBlockTitle('')
-      setItemLabel('')
-      setItemValue('')
+      setBlockText('')
       setHomeProbability(50)
       setDrawProbability(25)
       setAwayProbability(25)
@@ -363,7 +392,9 @@ export default function CreatePredictionPage() {
           max="100"
           value={homeProbability}
           onChange={(e) =>
-            setHomeProbability(Number(e.target.value))
+            setHomeProbability(
+              Number(e.target.value)
+            )
           }
           placeholder="Probabilidad local"
         />
@@ -374,7 +405,9 @@ export default function CreatePredictionPage() {
           max="100"
           value={drawProbability}
           onChange={(e) =>
-            setDrawProbability(Number(e.target.value))
+            setDrawProbability(
+              Number(e.target.value)
+            )
           }
           placeholder="Probabilidad empate"
         />
@@ -385,13 +418,19 @@ export default function CreatePredictionPage() {
           max="100"
           value={awayProbability}
           onChange={(e) =>
-            setAwayProbability(Number(e.target.value))
+            setAwayProbability(
+              Number(e.target.value)
+            )
           }
           placeholder="Probabilidad visitante"
         />
 
         <p>
-          Total: {homeProbability + drawProbability + awayProbability}%
+          Total:{' '}
+          {homeProbability +
+            drawProbability +
+            awayProbability}
+          %
         </p>
 
         <h2>Bloques de datos</h2>
@@ -404,49 +443,22 @@ export default function CreatePredictionPage() {
           }
         />
 
-        <input
-          placeholder="Dato. Ej: Goles"
-          value={itemLabel}
+        <textarea
+          placeholder={`Pegá los datos así:
+
+Goles: 2.8
+Tiros totales: 24
+Tiros a puerta: 10
+Corners: 9
+Tarjetas: 4
+Penales: 0.25
+Faltas: 24`}
+          value={blockText}
           onChange={(e) =>
-            setItemLabel(e.target.value)
+            setBlockText(e.target.value)
           }
+          rows={9}
         />
-
-        <input
-          placeholder="Valor. Ej: 3.4"
-          value={itemValue}
-          onChange={(e) =>
-            setItemValue(e.target.value)
-          }
-        />
-
-        <button
-          type="button"
-          onClick={addItem}
-        >
-          Agregar dato
-        </button>
-
-        <p>Datos en este bloque: {items.length}</p>
-
-        {items.map((item, index) => (
-          <p key={`${item.label}-${index}`}>
-            {item.label}: {item.value}
-
-            <button
-              type="button"
-              onClick={() =>
-                setItems(
-                  items.filter(
-                    (_, i) => i !== index
-                  )
-                )
-              }
-            >
-              Eliminar
-            </button>
-          </p>
-        ))}
 
         <button
           type="button"

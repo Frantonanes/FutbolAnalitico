@@ -49,6 +49,17 @@ const PredictionSchema = new mongoose.Schema(
       required: true
     },
 
+    status: {
+      type: String,
+      enum: ['pending', 'finished'],
+      default: 'pending'
+    },
+
+    finalScore: {
+      type: String,
+      default: ''
+    },
+
     homeProbability: {
       type: Number,
       required: true
