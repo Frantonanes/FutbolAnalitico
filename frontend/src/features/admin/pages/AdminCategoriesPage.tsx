@@ -19,15 +19,18 @@ export default function AdminCategoriesPage() {
   const [loading, setLoading] = useState(true)
 
   async function loadCategories() {
-    try {
-      const data = await getCategories()
-      setCategories(data)
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
+  try {
+    setLoading(true)
+
+    const data = await getCategories()
+    setCategories(data)
+  } catch (error) {
+    console.error(error)
+    alert('Error cargando categorías')
+  } finally {
+    setLoading(false)
   }
+}
 
   useEffect(() => {
     loadCategories()
@@ -97,10 +100,12 @@ export default function AdminCategoriesPage() {
       </form>
 
       {loading ? (
-        <p>Cargando...</p>
-      ) : (
-        <div className="admin-list">
-          {categories.map((category) => (
+  <p>Cargando...</p>
+) : categories.length === 0 ? (
+  <p>No hay categorías cargadas.</p>
+) : (
+  <div className="admin-list">
+    {categories.map((category) => (
             <div
               key={category._id}
               className="section-preview"
