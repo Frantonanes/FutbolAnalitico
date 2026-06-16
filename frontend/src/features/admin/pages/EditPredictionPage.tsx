@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import {
+  useNavigate,
+  useParams
+} from 'react-router-dom'
 
 import type {
   PredictionBlock,
@@ -35,7 +38,8 @@ export default function EditPredictionPage() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const [competitions, setCompetitions] = useState<Competition[]>([])
+  const [competitions, setCompetitions] =
+    useState<Competition[]>([])
   const [teams, setTeams] = useState<Team[]>([])
 
   const [competitionId, setCompetitionId] = useState('')
@@ -43,19 +47,32 @@ export default function EditPredictionPage() {
   const [awayTeamId, setAwayTeamId] = useState('')
   const [date, setDate] = useState('')
 
-  const [homeProbability, setHomeProbability] = useState(50)
-  const [drawProbability, setDrawProbability] = useState(25)
-  const [awayProbability, setAwayProbability] = useState(25)
+  const [homeProbability, setHomeProbability] =
+    useState(50)
+  const [drawProbability, setDrawProbability] =
+    useState(25)
+  const [awayProbability, setAwayProbability] =
+    useState(25)
 
-  const [blocks, setBlocks] = useState<PredictionBlock[]>([])
-
+  const [blocks, setBlocks] =
+    useState<PredictionBlock[]>([])
   const [blockTitle, setBlockTitle] = useState('')
-  const [items, setItems] = useState<PredictionBlockItem[]>([])
+  const [items, setItems] =
+    useState<PredictionBlockItem[]>([])
 
   const [itemLabel, setItemLabel] = useState('')
   const [itemValue, setItemValue] = useState('')
 
+  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+
+  const homeTeam = teams.find(
+    (team) => team._id === homeTeamId
+  )
+
+  const awayTeam = teams.find(
+    (team) => team._id === awayTeamId
+  )
 
   useEffect(() => {
     loadPageData()
@@ -65,10 +82,13 @@ export default function EditPredictionPage() {
     if (!id) return
 
     try {
-      const [prediction, competitionsData] = await Promise.all([
-        getPredictionById(id),
-        getCompetitions()
-      ])
+      setLoading(true)
+
+      const [prediction, competitionsData] =
+        await Promise.all([
+          getPredictionById(id),
+          getCompetitions()
+        ])
 
       setCompetitions(competitionsData)
 
@@ -76,7 +96,8 @@ export default function EditPredictionPage() {
         prediction.competitionId ||
         competitionsData.find(
           (competition: Competition) =>
-            competition.name === prediction.competition
+            competition.name ===
+            prediction.competition
         )?._id ||
         ''
 
@@ -86,19 +107,30 @@ export default function EditPredictionPage() {
       setHomeTeamId(prediction.homeTeamId || '')
       setAwayTeamId(prediction.awayTeamId || '')
 
-      setHomeProbability(prediction.homeProbability ?? 50)
-      setDrawProbability(prediction.drawProbability ?? 25)
-      setAwayProbability(prediction.awayProbability ?? 25)
+      setHomeProbability(
+        prediction.homeProbability ?? 50
+      )
+      setDrawProbability(
+        prediction.drawProbability ?? 25
+      )
+      setAwayProbability(
+        prediction.awayProbability ?? 25
+      )
 
       setBlocks(prediction.blocks || [])
 
       if (currentCompetitionId) {
-        const teamsData = await getTeamsByCompetition(currentCompetitionId)
+        const teamsData =
+          await getTeamsByCompetition(
+            currentCompetitionId
+          )
+
         setTeams(teamsData)
 
         if (!prediction.homeTeamId) {
           const home = teamsData.find(
-            (team: Team) => team.name === prediction.homeTeam
+            (team: Team) =>
+              team.name === prediction.homeTeam
           )
 
           if (home) setHomeTeamId(home._id)
@@ -106,7 +138,8 @@ export default function EditPredictionPage() {
 
         if (!prediction.awayTeamId) {
           const away = teamsData.find(
-            (team: Team) => team.name === prediction.awayTeam
+            (team: Team) =>
+              team.name === prediction.awayTeam
           )
 
           if (away) setAwayTeamId(away._id)
@@ -115,6 +148,8 @@ export default function EditPredictionPage() {
     } catch (error) {
       console.error(error)
       alert('Error cargando predicción')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -127,7 +162,9 @@ export default function EditPredictionPage() {
     if (!id) return
 
     try {
-      const data = await getTeamsByCompetition(id)
+      const data =
+        await getTeamsByCompetition(id)
+
       setTeams(data)
     } catch (error) {
       console.error(error)
@@ -144,8 +181,8 @@ export default function EditPredictionPage() {
     setItems([
       ...items,
       {
-        label: itemLabel,
-        value: itemValue
+        label: itemLabel.trim(),
+        value: itemValue.trim()
       }
     ])
 
@@ -154,7 +191,9 @@ export default function EditPredictionPage() {
   }
 
   function removeItem(index: number) {
-    setItems(items.filter((_, i) => i !== index))
+    setItems(
+      items.filter((_, i) => i !== index)
+    )
   }
 
   function addBlock() {
@@ -171,7 +210,7 @@ export default function EditPredictionPage() {
     setBlocks([
       ...blocks,
       {
-        title: blockTitle,
+        title: blockTitle.trim(),
         items
       }
     ])
@@ -183,10 +222,14 @@ export default function EditPredictionPage() {
   }
 
   function removeBlock(index: number) {
-    setBlocks(blocks.filter((_, i) => i !== index))
+    setBlocks(
+      blocks.filter((_, i) => i !== index)
+    )
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(
+    e: React.FormEvent
+  ) {
     e.preventDefault()
 
     if (!id) return
@@ -196,61 +239,95 @@ export default function EditPredictionPage() {
       drawProbability +
       awayProbability
 
-    if (total !== 100) {
-      alert('Las probabilidades deben sumar 100%')
+    if (!competitionId) {
+      alert('Seleccioná una competición')
       return
     }
 
-    if (!competitionId || !homeTeamId || !awayTeamId || !date) {
-      alert('Completá todos los campos')
+    if (!homeTeamId || !awayTeamId) {
+      alert('Seleccioná los dos equipos')
       return
     }
 
     if (homeTeamId === awayTeamId) {
-      alert('El equipo local y visitante no pueden ser el mismo')
+      alert(
+        'El equipo local y visitante no pueden ser el mismo'
+      )
+      return
+    }
+
+    if (!date) {
+      alert('Seleccioná una fecha')
+      return
+    }
+
+    if (
+      homeProbability < 0 ||
+      drawProbability < 0 ||
+      awayProbability < 0 ||
+      homeProbability > 100 ||
+      drawProbability > 100 ||
+      awayProbability > 100
+    ) {
+      alert(
+        'Las probabilidades deben estar entre 0 y 100'
+      )
+      return
+    }
+
+    if (total !== 100) {
+      alert(
+        'Las probabilidades deben sumar 100%'
+      )
       return
     }
 
     const competition = competitions.find(
-      (competition) => competition._id === competitionId
+      (competition) =>
+        competition._id === competitionId
     )
 
-    const home = teams.find((team) => team._id === homeTeamId)
-    const away = teams.find((team) => team._id === awayTeamId)
+    const home = teams.find(
+      (team) => team._id === homeTeamId
+    )
+
+    const away = teams.find(
+      (team) => team._id === awayTeamId
+    )
 
     if (!competition || !home || !away) {
       alert('Datos inválidos')
       return
     }
 
-    const updatedPrediction = {
-      slug: slugify(`${home.name} vs ${away.name}`),
-
-      competition: competition.name,
-      competitionId,
-
-      homeTeam: home.name,
-      awayTeam: away.name,
-
-      homeTeamId,
-      awayTeamId,
-
-      homeLogo: home.logo,
-      awayLogo: away.logo,
-
-      date,
-
-      homeProbability,
-      drawProbability,
-      awayProbability,
-
-      blocks
-    }
-
     try {
       setSaving(true)
 
-      await updatePrediction(id, updatedPrediction)
+      await updatePrediction(id, {
+        slug: slugify(
+          `${home.name} vs ${away.name}`
+        ),
+
+        competition: competition.name,
+        competitionId,
+
+        homeTeam: home.name,
+        awayTeam: away.name,
+
+        homeTeamId,
+        awayTeamId,
+
+        homeLogo: home.logo,
+        awayLogo: away.logo,
+
+        date,
+
+        homeProbability,
+        drawProbability,
+        awayProbability,
+
+        blocks
+      })
 
       alert('Predicción actualizada')
       navigate('/admin/predicciones')
@@ -262,21 +339,42 @@ export default function EditPredictionPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="admin-form-page">
+        <h1>Editar predicción</h1>
+        <p>Cargando predicción...</p>
+      </div>
+    )
+  }
+
   return (
     <div className="admin-form-page">
       <h1>Editar predicción</h1>
 
-      <form onSubmit={handleSubmit} className="admin-form">
+      <form
+        onSubmit={handleSubmit}
+        className="admin-form"
+      >
         <label>
           Competición
           <select
             value={competitionId}
-            onChange={(e) => handleCompetitionChange(e.target.value)}
+            onChange={(e) =>
+              handleCompetitionChange(
+                e.target.value
+              )
+            }
           >
-            <option value="">Seleccionar competición</option>
+            <option value="">
+              Seleccionar competición
+            </option>
 
             {competitions.map((competition) => (
-              <option key={competition._id} value={competition._id}>
+              <option
+                key={competition._id}
+                value={competition._id}
+              >
                 {competition.name}
               </option>
             ))}
@@ -288,7 +386,9 @@ export default function EditPredictionPage() {
           <input
             type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e) =>
+              setDate(e.target.value)
+            }
           />
         </label>
 
@@ -296,33 +396,65 @@ export default function EditPredictionPage() {
           Equipo local
           <select
             value={homeTeamId}
-            onChange={(e) => setHomeTeamId(e.target.value)}
+            onChange={(e) =>
+              setHomeTeamId(e.target.value)
+            }
+            disabled={!competitionId}
           >
-            <option value="">Seleccionar equipo</option>
+            <option value="">
+              Seleccionar equipo
+            </option>
 
             {teams.map((team) => (
-              <option key={team._id} value={team._id}>
+              <option
+                key={team._id}
+                value={team._id}
+              >
                 {team.name}
               </option>
             ))}
           </select>
         </label>
+
+        {homeTeam?.logo && (
+          <img
+            src={homeTeam.logo}
+            alt={homeTeam.name}
+            className="competition-logo-preview"
+          />
+        )}
 
         <label>
           Equipo visitante
           <select
             value={awayTeamId}
-            onChange={(e) => setAwayTeamId(e.target.value)}
+            onChange={(e) =>
+              setAwayTeamId(e.target.value)
+            }
+            disabled={!competitionId}
           >
-            <option value="">Seleccionar equipo</option>
+            <option value="">
+              Seleccionar equipo
+            </option>
 
             {teams.map((team) => (
-              <option key={team._id} value={team._id}>
+              <option
+                key={team._id}
+                value={team._id}
+              >
                 {team.name}
               </option>
             ))}
           </select>
         </label>
+
+        {awayTeam?.logo && (
+          <img
+            src={awayTeam.logo}
+            alt={awayTeam.name}
+            className="competition-logo-preview"
+          />
+        )}
 
         <h2>Probabilidades</h2>
 
@@ -330,9 +462,13 @@ export default function EditPredictionPage() {
           Local %
           <input
             type="number"
+            min="0"
+            max="100"
             value={homeProbability}
             onChange={(e) =>
-              setHomeProbability(Number(e.target.value))
+              setHomeProbability(
+                Number(e.target.value)
+              )
             }
           />
         </label>
@@ -341,9 +477,13 @@ export default function EditPredictionPage() {
           Empate %
           <input
             type="number"
+            min="0"
+            max="100"
             value={drawProbability}
             onChange={(e) =>
-              setDrawProbability(Number(e.target.value))
+              setDrawProbability(
+                Number(e.target.value)
+              )
             }
           />
         </label>
@@ -352,15 +492,23 @@ export default function EditPredictionPage() {
           Visitante %
           <input
             type="number"
+            min="0"
+            max="100"
             value={awayProbability}
             onChange={(e) =>
-              setAwayProbability(Number(e.target.value))
+              setAwayProbability(
+                Number(e.target.value)
+              )
             }
           />
         </label>
 
         <p>
-          Total: {homeProbability + drawProbability + awayProbability}%
+          Total:{' '}
+          {homeProbability +
+            drawProbability +
+            awayProbability}
+          %
         </p>
 
         <h2>Bloques de datos</h2>
@@ -370,7 +518,9 @@ export default function EditPredictionPage() {
           <input
             placeholder="Ej: Estadísticas esperadas"
             value={blockTitle}
-            onChange={(e) => setBlockTitle(e.target.value)}
+            onChange={(e) =>
+              setBlockTitle(e.target.value)
+            }
           />
         </label>
 
@@ -379,7 +529,9 @@ export default function EditPredictionPage() {
           <input
             placeholder="Ej: Goles"
             value={itemLabel}
-            onChange={(e) => setItemLabel(e.target.value)}
+            onChange={(e) =>
+              setItemLabel(e.target.value)
+            }
           />
         </label>
 
@@ -388,11 +540,16 @@ export default function EditPredictionPage() {
           <input
             placeholder="Ej: 3.4"
             value={itemValue}
-            onChange={(e) => setItemValue(e.target.value)}
+            onChange={(e) =>
+              setItemValue(e.target.value)
+            }
           />
         </label>
 
-        <button type="button" onClick={addItem}>
+        <button
+          type="button"
+          onClick={addItem}
+        >
           Agregar dato
         </button>
 
@@ -404,14 +561,19 @@ export default function EditPredictionPage() {
 
             <button
               type="button"
-              onClick={() => removeItem(index)}
+              onClick={() =>
+                removeItem(index)
+              }
             >
               Eliminar
             </button>
           </p>
         ))}
 
-        <button type="button" onClick={addBlock}>
+        <button
+          type="button"
+          onClick={addBlock}
+        >
           Agregar bloque
         </button>
 
@@ -421,18 +583,27 @@ export default function EditPredictionPage() {
           <p>No hay bloques cargados.</p>
         ) : (
           blocks.map((block, index) => (
-            <div key={`${block.title}-${index}`} className="section-preview">
+            <div
+              key={`${block.title}-${index}`}
+              className="section-preview"
+            >
               <strong>{block.title}</strong>
 
-              {block.items.map((item, itemIndex) => (
-                <p key={`${item.label}-${itemIndex}`}>
-                  {item.label}: {item.value}
-                </p>
-              ))}
+              {block.items.map(
+                (item, itemIndex) => (
+                  <p
+                    key={`${item.label}-${itemIndex}`}
+                  >
+                    {item.label}: {item.value}
+                  </p>
+                )
+              )}
 
               <button
                 type="button"
-                onClick={() => removeBlock(index)}
+                onClick={() =>
+                  removeBlock(index)
+                }
               >
                 Eliminar bloque
               </button>
@@ -440,8 +611,13 @@ export default function EditPredictionPage() {
           ))
         )}
 
-        <button type="submit" disabled={saving}>
-          {saving ? 'Guardando...' : 'Guardar cambios'}
+        <button
+          type="submit"
+          disabled={saving}
+        >
+          {saving
+            ? 'Guardando...'
+            : 'Guardar cambios'}
         </button>
       </form>
     </div>
