@@ -17,8 +17,8 @@ export default function Footer() {
 
         <div className="footer-links">
           <Link to="/">Inicio</Link>
-          <Link to="/mundial-2026">Mundial 2026</Link>
-          <Link to="/seleccion-argentina">Selección Argentina</Link>
+          <Link to="/categoria/mundial-2026">Mundial 2026</Link>
+          <Link to="/categoria/seleccion-argentina">Selección Argentina</Link>
           <Link to="/noticias">Noticias</Link>
           <Link to="/predicciones">Predicciones</Link>
         </div>
