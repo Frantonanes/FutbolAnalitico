@@ -23,8 +23,8 @@ type Hashtag = {
 
 type Media = {
   _id: string
+  name?: string
   url: string
-  title?: string
   hashtags?: string[]
 }
 
@@ -54,9 +54,13 @@ export default function CreateNewsPage() {
   const [selectedTeam, setSelectedTeam] = useState('')
 
   const [sections, setSections] = useState<NewsSection[]>([])
-  const [sectionType, setSectionType] = useState<NewsSection['type']>('text')
+  const [sectionType, setSectionType] =
+    useState<NewsSection['type']>('text')
   const [sectionContent, setSectionContent] = useState('')
   const [sectionImage, setSectionImage] = useState('')
+
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     loadContent()
@@ -64,6 +68,8 @@ export default function CreateNewsPage() {
 
   async function loadContent() {
     try {
+      setLoading(true)
+
       const [
         categoriesData,
         hashtagsData,
@@ -82,10 +88,15 @@ export default function CreateNewsPage() {
       setTeamOptions(teamsData)
     } catch (error) {
       console.error(error)
+      alert('Error cargando datos del formulario')
+    } finally {
+      setLoading(false)
     }
   }
 
-  async function handleImageHashtagChange(hashtag: string) {
+  async function handleImageHashtagChange(
+    hashtag: string
+  ) {
     setSelectedImageHashtag(hashtag)
 
     try {
@@ -99,18 +110,24 @@ export default function CreateNewsPage() {
       setMediaOptions(data)
     } catch (error) {
       console.error(error)
+      alert('Error buscando imágenes')
     }
   }
 
   function toggleHashtag(hashtag: string) {
     if (selectedHashtags.includes(hashtag)) {
       setSelectedHashtags(
-        selectedHashtags.filter((tag) => tag !== hashtag)
+        selectedHashtags.filter(
+          (tag) => tag !== hashtag
+        )
       )
       return
     }
 
-    setSelectedHashtags([...selectedHashtags, hashtag])
+    setSelectedHashtags([
+      ...selectedHashtags,
+      hashtag
+    ])
   }
 
   function addTeam() {
@@ -126,12 +143,18 @@ export default function CreateNewsPage() {
   }
 
   function addSection() {
-    if (sectionType === 'text' && !sectionContent) {
+    if (
+      sectionType === 'text' &&
+      !sectionContent.trim()
+    ) {
       alert('Agregá contenido al bloque')
       return
     }
 
-    if (sectionType !== 'text' && !sectionImage) {
+    if (
+      sectionType !== 'text' &&
+      !sectionImage
+    ) {
       alert('Seleccioná una imagen para el bloque')
       return
     }
@@ -160,40 +183,40 @@ export default function CreateNewsPage() {
     setSectionImage('')
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(
+    e: React.FormEvent
+  ) {
     e.preventDefault()
 
-    const news = {
-      slug: slugify(title),
-
-      title,
-      subtitle,
-      category,
-      competition,
-      image,
-
-      hashtags: selectedHashtags,
-
-      teams,
-
-      sections
-    }
     if (!title.trim()) {
-  alert('Ingresá un título')
-  return
-}
+      alert('Ingresá un título')
+      return
+    }
 
-if (!category) {
-  alert('Seleccioná una categoría')
-  return
-}
+    if (!category) {
+      alert('Seleccioná una categoría')
+      return
+    }
 
-if (!image) {
-  alert('Seleccioná una imagen principal')
-  return
-}
+    if (!image) {
+      alert('Seleccioná una imagen principal')
+      return
+    }
+
     try {
-      await createNews(news)
+      setSaving(true)
+
+      await createNews({
+        slug: slugify(title),
+        title: title.trim(),
+        subtitle,
+        category,
+        competition,
+        image,
+        hashtags: selectedHashtags,
+        teams,
+        sections
+      })
 
       alert('Noticia creada')
 
@@ -205,43 +228,71 @@ if (!image) {
       setSelectedHashtags([])
       setSelectedImageHashtag('')
       setTeams([])
+      setSelectedTeam('')
       setSections([])
       setSectionType('text')
       setSectionContent('')
       setSectionImage('')
+
+      loadContent()
     } catch (error) {
       console.error(error)
       alert('Error creando noticia')
+    } finally {
+      setSaving(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="admin-form-page">
+        <h1>Crear noticia</h1>
+        <p>Cargando formulario...</p>
+      </div>
+    )
   }
 
   return (
     <div className="admin-form-page">
       <h1>Crear noticia</h1>
 
-      <form onSubmit={handleSubmit} className="admin-form">
+      <form
+        onSubmit={handleSubmit}
+        className="admin-form"
+      >
         <input
           placeholder="Título"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) =>
+            setTitle(e.target.value)
+          }
         />
 
         <input
           placeholder="Subtítulo"
           value={subtitle}
-          onChange={(e) => setSubtitle(e.target.value)}
+          onChange={(e) =>
+            setSubtitle(e.target.value)
+          }
         />
 
         <label>
           Categoría
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) =>
+              setCategory(e.target.value)
+            }
           >
-            <option value="">Seleccionar categoría</option>
+            <option value="">
+              Seleccionar categoría
+            </option>
 
             {categories.map((cat) => (
-              <option key={cat._id} value={cat.name}>
+              <option
+                key={cat._id}
+                value={cat.name}
+              >
                 {cat.name}
               </option>
             ))}
@@ -251,19 +302,30 @@ if (!image) {
         <input
           placeholder="Competencia. Ej: Mundial, Champions"
           value={competition}
-          onChange={(e) => setCompetition(e.target.value)}
+          onChange={(e) =>
+            setCompetition(e.target.value)
+          }
         />
 
         <label>
           Filtrar imágenes por hashtag
           <select
             value={selectedImageHashtag}
-            onChange={(e) => handleImageHashtagChange(e.target.value)}
+            onChange={(e) =>
+              handleImageHashtagChange(
+                e.target.value
+              )
+            }
           >
-            <option value="">Todas las imágenes</option>
+            <option value="">
+              Todas las imágenes
+            </option>
 
             {hashtagOptions.map((hashtag) => (
-              <option key={hashtag._id} value={hashtag.name}>
+              <option
+                key={hashtag._id}
+                value={hashtag.name}
+              >
                 #{hashtag.name}
               </option>
             ))}
@@ -274,13 +336,20 @@ if (!image) {
           Imagen principal
           <select
             value={image}
-            onChange={(e) => setImage(e.target.value)}
+            onChange={(e) =>
+              setImage(e.target.value)
+            }
           >
-            <option value="">Seleccionar imagen</option>
+            <option value="">
+              Seleccionar imagen
+            </option>
 
             {mediaOptions.map((media) => (
-              <option key={media._id} value={media.url}>
-                {media.title || media.url}
+              <option
+                key={media._id}
+                value={media.url}
+              >
+                {media.name || 'Sin nombre'}
               </option>
             ))}
           </select>
@@ -300,8 +369,12 @@ if (!image) {
           <label key={hashtag._id}>
             <input
               type="checkbox"
-              checked={selectedHashtags.includes(hashtag.name)}
-              onChange={() => toggleHashtag(hashtag.name)}
+              checked={selectedHashtags.includes(
+                hashtag.name
+              )}
+              onChange={() =>
+                toggleHashtag(hashtag.name)
+              }
             />
             #{hashtag.name}
           </label>
@@ -311,29 +384,42 @@ if (!image) {
 
         <select
           value={selectedTeam}
-          onChange={(e) => setSelectedTeam(e.target.value)}
+          onChange={(e) =>
+            setSelectedTeam(e.target.value)
+          }
         >
-          <option value="">Seleccionar equipo</option>
+          <option value="">
+            Seleccionar equipo
+          </option>
 
           {teamOptions.map((team) => (
-            <option key={team._id} value={team.name}>
+            <option
+              key={team._id}
+              value={team.name}
+            >
               {team.name}
             </option>
           ))}
         </select>
 
-        <button type="button" onClick={addTeam}>
+        <button
+          type="button"
+          onClick={addTeam}
+        >
           Agregar equipo
         </button>
 
         {teams.map((team, index) => (
           <p key={`${team}-${index}`}>
             {team}
+
             <button
               type="button"
               onClick={() =>
                 setTeams(
-                  teams.filter((_, i) => i !== index)
+                  teams.filter(
+                    (_, i) => i !== index
+                  )
                 )
               }
             >
@@ -347,20 +433,30 @@ if (!image) {
         <select
           value={sectionType}
           onChange={(e) =>
-            setSectionType(e.target.value as NewsSection['type'])
+            setSectionType(
+              e.target.value as NewsSection['type']
+            )
           }
         >
           <option value="text">Texto</option>
-          <option value="image-left">Imagen izquierda</option>
-          <option value="image-right">Imagen derecha</option>
-          <option value="image-full">Imagen completa</option>
+          <option value="image-left">
+            Imagen izquierda
+          </option>
+          <option value="image-right">
+            Imagen derecha
+          </option>
+          <option value="image-full">
+            Imagen completa
+          </option>
         </select>
 
         {sectionType !== 'image-full' && (
           <textarea
             placeholder="Contenido de la sección"
             value={sectionContent}
-            onChange={(e) => setSectionContent(e.target.value)}
+            onChange={(e) =>
+              setSectionContent(e.target.value)
+            }
             rows={6}
           />
         )}
@@ -369,13 +465,20 @@ if (!image) {
           <>
             <select
               value={sectionImage}
-              onChange={(e) => setSectionImage(e.target.value)}
+              onChange={(e) =>
+                setSectionImage(e.target.value)
+              }
             >
-              <option value="">Seleccionar imagen de sección</option>
+              <option value="">
+                Seleccionar imagen de sección
+              </option>
 
               {mediaOptions.map((media) => (
-                <option key={media._id} value={media.url}>
-                  {media.title || media.url}
+                <option
+                  key={media._id}
+                  value={media.url}
+                >
+                  {media.name || 'Sin nombre'}
                 </option>
               ))}
             </select>
@@ -390,33 +493,42 @@ if (!image) {
           </>
         )}
 
-        <button type="button" onClick={addSection}>
+        <button
+          type="button"
+          onClick={addSection}
+        >
           Agregar sección
         </button>
 
         <p>Secciones creadas: {sections.length}</p>
 
         {sections.map((section, index) => (
-          <div key={index} className="section-preview">
+          <div
+            key={index}
+            className="section-preview"
+          >
             <strong>{section.type}</strong>
 
             {'content' in section && (
               <p>{section.content}</p>
             )}
 
-            {'image' in section && section.image && (
-              <img
-                src={section.image}
-                alt=""
-                className="section-image-preview"
-              />
-            )}
+            {'image' in section &&
+              section.image && (
+                <img
+                  src={section.image}
+                  alt=""
+                  className="section-image-preview"
+                />
+              )}
 
             <button
               type="button"
               onClick={() =>
                 setSections(
-                  sections.filter((_, i) => i !== index)
+                  sections.filter(
+                    (_, i) => i !== index
+                  )
                 )
               }
             >
@@ -425,8 +537,13 @@ if (!image) {
           </div>
         ))}
 
-        <button type="submit">
-          Crear noticia
+        <button
+          type="submit"
+          disabled={saving}
+        >
+          {saving
+            ? 'Creando...'
+            : 'Crear noticia'}
         </button>
       </form>
     </div>
