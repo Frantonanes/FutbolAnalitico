@@ -110,6 +110,8 @@ export default function PredictionsPage() {
                 awayProbability={prediction.awayProbability}
                 homeLogo={prediction.homeLogo}
                 awayLogo={prediction.awayLogo}
+                status={prediction.status}
+                finalScore={prediction.finalScore}
               />
             ))}
           </section>

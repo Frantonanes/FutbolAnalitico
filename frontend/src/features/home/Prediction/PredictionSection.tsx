@@ -69,6 +69,8 @@ export default function PredictionsSection() {
               homeProbability={prediction.homeProbability}
               drawProbability={prediction.drawProbability}
               awayProbability={prediction.awayProbability}
+              status={prediction.status}
+              finalScore={prediction.finalScore}
             />
           ))}
         </div>

@@ -12,6 +12,8 @@ type PredictionCardProps = {
   awayProbability: number
   homeLogo?: string
   awayLogo?: string
+  status?: 'pending' | 'finished'
+  finalScore?: string
 }
 
 export default function PredictionCard({
@@ -24,7 +26,9 @@ export default function PredictionCard({
   awayLogo,
   homeProbability,
   drawProbability,
-  awayProbability
+  awayProbability,
+  status = 'pending',
+  finalScore = ''
 }: PredictionCardProps) {
   const homeInitial =
     homeTeam?.charAt(0) || '?'
@@ -32,14 +36,25 @@ export default function PredictionCard({
   const awayInitial =
     awayTeam?.charAt(0) || '?'
 
+  const isFinished =
+    status === 'finished'
+
   return (
     <Link
       to={`/predicciones/${slug}`}
       className="prediction-card"
     >
-      <span className="prediction-card__competition">
-        {competition}
-      </span>
+      <div className="prediction-card__top">
+        <span className="prediction-card__competition">
+          {competition}
+        </span>
+
+        {isFinished && (
+          <span className="prediction-card__status">
+            Finalizado
+          </span>
+        )}
+      </div>
 
       <div className="prediction-card__header">
         <div className="team">
@@ -78,45 +93,59 @@ export default function PredictionCard({
         </div>
       </div>
 
-      <div className="prediction-card__bar">
-        <div
-          className="home-bar"
-          style={{
-            width: `${homeProbability}%`
-          }}
-        />
+      {isFinished ? (
+        <div className="prediction-card__result">
+          <span>Resultado final</span>
 
-        <div
-          className="draw-bar"
-          style={{
-            width: `${drawProbability}%`
-          }}
-        />
+          <strong>
+            {finalScore || 'Finalizado'}
+          </strong>
+        </div>
+      ) : (
+        <>
+          <div className="prediction-card__bar">
+            <div
+              className="home-bar"
+              style={{
+                width: `${homeProbability}%`
+              }}
+            />
 
-        <div
-          className="away-bar"
-          style={{
-            width: `${awayProbability}%`
-          }}
-        />
-      </div>
+            <div
+              className="draw-bar"
+              style={{
+                width: `${drawProbability}%`
+              }}
+            />
 
-      <div className="prediction-card__percentages">
-        <span>
-          {homeProbability}% Local
-        </span>
+            <div
+              className="away-bar"
+              style={{
+                width: `${awayProbability}%`
+              }}
+            />
+          </div>
 
-        <span>
-          {drawProbability}% Empate
-        </span>
+          <div className="prediction-card__percentages">
+            <span>
+              {homeProbability}% Local
+            </span>
 
-        <span>
-          {awayProbability}% Visitante
-        </span>
-      </div>
+            <span>
+              {drawProbability}% Empate
+            </span>
+
+            <span>
+              {awayProbability}% Visitante
+            </span>
+          </div>
+        </>
+      )}
 
       <span className="prediction-card__button">
-        Ver análisis
+        {isFinished
+          ? 'Ver resumen'
+          : 'Ver análisis'}
       </span>
     </Link>
   )
