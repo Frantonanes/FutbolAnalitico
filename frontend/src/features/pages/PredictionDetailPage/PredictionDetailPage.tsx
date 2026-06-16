@@ -203,39 +203,41 @@ export default function PredictionDetailPage() {
           </section>
         )}
 
-        <section className="prediction-detail__blocks">
-          {(prediction.blocks || []).length === 0 ? (
-            <p>
-              No hay datos analíticos cargados para este partido.
-            </p>
-          ) : (
-            prediction.blocks.map((block, index) => (
-              <div
-                key={`${block.title}-${index}`}
-                className="block"
-              >
-                <h3>{block.title}</h3>
+        {!isFinished && (
+  <section className="prediction-detail__blocks">
+    {(prediction.blocks || []).length === 0 ? (
+      <p>
+        No hay datos analíticos cargados para este partido.
+      </p>
+    ) : (
+      prediction.blocks.map((block, index) => (
+        <div
+          key={`${block.title}-${index}`}
+          className="block"
+        >
+          <h3>{block.title}</h3>
 
-                <div className="block-data-list">
-                  {(block.items || []).map(
-                    (item, itemIndex) => (
-                      <div
-                        key={`${item.label}-${itemIndex}`}
-                        className="block-data-item"
-                      >
-                        <span>{item.label}</span>
+          <div className="block-data-list">
+            {(block.items || []).map(
+              (item, itemIndex) => (
+                <div
+                  key={`${item.label}-${itemIndex}`}
+                  className="block-data-item"
+                >
+                  <span>{item.label}</span>
 
-                        <strong>
-                          {item.value}
-                        </strong>
-                      </div>
-                    )
-                  )}
+                  <strong>
+                    {item.value}
+                  </strong>
                 </div>
-              </div>
-            ))
-          )}
-        </section>
+              )
+            )}
+          </div>
+        </div>
+      ))
+    )}
+  </section>
+)}
       </article>
     </>
   )
