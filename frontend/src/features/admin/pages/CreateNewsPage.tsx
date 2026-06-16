@@ -178,7 +178,20 @@ export default function CreateNewsPage() {
 
       sections
     }
+    if (!title.trim()) {
+  alert('Ingresá un título')
+  return
+}
 
+if (!category) {
+  alert('Seleccioná una categoría')
+  return
+}
+
+if (!image) {
+  alert('Seleccioná una imagen principal')
+  return
+}
     try {
       await createNews(news)
 

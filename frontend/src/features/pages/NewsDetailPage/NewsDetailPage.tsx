@@ -34,6 +34,21 @@ export default function NewsDetailPage() {
     return <h1 className="news-detail__status">Noticia no encontrada</h1>
   }
 
+  const publishedDate = news.createdAt
+    ? new Date(news.createdAt).toLocaleDateString('es-AR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      })
+    : null
+
+  const publishedTime = news.createdAt
+    ? new Date(news.createdAt).toLocaleTimeString('es-AR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    : null
+
   return (
     <>
       <Helmet>
@@ -64,6 +79,18 @@ export default function NewsDetailPage() {
           ← Volver
         </button>
 
+        {news.image && (
+          <div className="news-detail__hero-wrap">
+            <img
+              className="news-detail__hero"
+              src={news.image}
+              alt={news.title}
+            />
+
+            <div className="news-detail__hero-overlay" />
+          </div>
+        )}
+
         <header className="news-detail__header">
           <span className="news-detail__category">
             {news.category}
@@ -77,20 +104,12 @@ export default function NewsDetailPage() {
             {news.subtitle}
           </p>
 
-          {news.createdAt && (
+          {publishedDate && publishedTime && (
             <p className="news-detail__date">
-              {new Date(news.createdAt).toLocaleDateString('es-AR')}
+              Publicado el {publishedDate} · {publishedTime} hs
             </p>
           )}
         </header>
-
-        {news.image && (
-          <img
-            className="news-detail__hero"
-            src={news.image}
-            alt={news.title}
-          />
-        )}
 
         <div className="news-detail__content">
           {(news.sections || []).map((section, index) => {

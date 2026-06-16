@@ -6,11 +6,41 @@ import {
   updateNews
 } from '../../../services/newsService'
 
-import { uploadImage } from '../../../services/uploadService'
+import {
+  getCategories,
+  getHashtags,
+  getMedia,
+  searchMedia,
+  getTeams
+} from '../../../services/contentService'
+
 import { slugify } from '../../../shared/utils/slugify'
 import type { NewsSection } from '../../../shared/types/News'
 
 import './AdminForm.css'
+
+type Category = {
+  _id: string
+  name: string
+}
+
+type Hashtag = {
+  _id: string
+  name: string
+}
+
+type Media = {
+  _id: string
+  url: string
+  title?: string
+  hashtags?: string[]
+}
+
+type Team = {
+  _id: string
+  name: string
+  logo?: string
+}
 
 export default function EditNewsPage() {
   const { id } = useParams()
@@ -19,71 +49,127 @@ export default function EditNewsPage() {
   const [title, setTitle] = useState('')
   const [subtitle, setSubtitle] = useState('')
   const [category, setCategory] = useState('')
+  const [competition, setCompetition] = useState('')
   const [image, setImage] = useState('')
-  const [hashtags, setHashtags] = useState('')
-  const [uploading, setUploading] = useState(false)
+
+  const [categories, setCategories] = useState<Category[]>([])
+  const [hashtagOptions, setHashtagOptions] = useState<Hashtag[]>([])
+  const [mediaOptions, setMediaOptions] = useState<Media[]>([])
+  const [teamOptions, setTeamOptions] = useState<Team[]>([])
+
+  const [selectedHashtags, setSelectedHashtags] = useState<string[]>([])
+  const [selectedImageHashtag, setSelectedImageHashtag] = useState('')
+
+  const [teams, setTeams] = useState<string[]>([])
+  const [selectedTeam, setSelectedTeam] = useState('')
 
   const [sections, setSections] = useState<NewsSection[]>([])
   const [sectionType, setSectionType] = useState<NewsSection['type']>('text')
   const [sectionContent, setSectionContent] = useState('')
   const [sectionImage, setSectionImage] = useState('')
 
+  const [saving, setSaving] = useState(false)
+
   useEffect(() => {
-    loadNews()
+    loadPageData()
   }, [])
 
-  async function loadNews() {
+  async function loadPageData() {
     if (!id) return
 
-    const article = await getNewsById(id)
-
-    setTitle(article.title)
-    setSubtitle(article.subtitle)
-    setCategory(article.category)
-    setImage(article.image)
-    setHashtags(article.hashtags?.join(', ') || '')
-    setSections(article.sections || [])
-  }
-
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
     try {
-      setUploading(true)
-      const data = await uploadImage(file)
-      setImage(data.url)
-    } finally {
-      setUploading(false)
+      const [
+        article,
+        categoriesData,
+        hashtagsData,
+        mediaData,
+        teamsData
+      ] = await Promise.all([
+        getNewsById(id),
+        getCategories(),
+        getHashtags(),
+        getMedia(),
+        getTeams()
+      ])
+
+      setTitle(article.title || '')
+      setSubtitle(article.subtitle || '')
+      setCategory(article.category || '')
+      setCompetition(article.competition || '')
+      setImage(article.image || '')
+      setSelectedHashtags(article.hashtags || [])
+      setTeams(article.teams || [])
+      setSections(article.sections || [])
+
+      setCategories(categoriesData)
+      setHashtagOptions(hashtagsData)
+      setMediaOptions(mediaData)
+      setTeamOptions(teamsData)
+    } catch (error) {
+      console.error(error)
+      alert('Error cargando noticia')
     }
   }
 
-  async function handleSectionImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+  async function handleImageHashtagChange(hashtag: string) {
+    setSelectedImageHashtag(hashtag)
 
     try {
-      setUploading(true)
-      const data = await uploadImage(file)
-      setSectionImage(data.url)
-    } finally {
-      setUploading(false)
+      if (!hashtag) {
+        const data = await getMedia()
+        setMediaOptions(data)
+        return
+      }
+
+      const data = await searchMedia(hashtag)
+      setMediaOptions(data)
+    } catch (error) {
+      console.error(error)
     }
+  }
+
+  function toggleHashtag(hashtag: string) {
+    if (selectedHashtags.includes(hashtag)) {
+      setSelectedHashtags(
+        selectedHashtags.filter((tag) => tag !== hashtag)
+      )
+      return
+    }
+
+    setSelectedHashtags([...selectedHashtags, hashtag])
+  }
+
+  function addTeam() {
+    if (!selectedTeam) return
+
+    if (teams.includes(selectedTeam)) {
+      alert('Ese equipo ya fue agregado')
+      return
+    }
+
+    setTeams([...teams, selectedTeam])
+    setSelectedTeam('')
   }
 
   function addSection() {
-    if (sectionType === 'text' && !sectionContent) {
+    if (sectionType === 'text' && !sectionContent.trim()) {
       alert('Agregá contenido al bloque')
       return
     }
 
     if (sectionType !== 'text' && !sectionImage) {
-      alert('Agregá una imagen al bloque')
+      alert('Seleccioná una imagen para el bloque')
       return
     }
 
     if (sectionType === 'image-full') {
-      setSections([...sections, { type: 'image-full', image: sectionImage }])
+      setSections([
+        ...sections,
+        {
+          type: 'image-full',
+          image: sectionImage
+        }
+      ])
     } else {
       setSections([
         ...sections,
@@ -103,23 +189,48 @@ export default function EditNewsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
+    if (!id) return
+
+    if (!title.trim()) {
+      alert('Ingresá un título')
+      return
+    }
+
+    if (!category) {
+      alert('Seleccioná una categoría')
+      return
+    }
+
+    if (!image) {
+      alert('Seleccioná una imagen principal')
+      return
+    }
+
     const updatedNews = {
       slug: slugify(title),
       title,
       subtitle,
       category,
+      competition,
       image,
-      hashtags: hashtags
-        .split(',')
-        .map((tag) => tag.trim())
-        .filter(Boolean),
+      hashtags: selectedHashtags,
+      teams,
       sections
     }
 
-    await updateNews(id!, updatedNews)
+    try {
+      setSaving(true)
 
-    alert('Noticia actualizada')
-    navigate('/admin/noticias')
+      await updateNews(id, updatedNews)
+
+      alert('Noticia actualizada')
+      navigate('/admin/noticias')
+    } catch (error) {
+      console.error(error)
+      alert('Error actualizando noticia')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -127,32 +238,133 @@ export default function EditNewsPage() {
       <h1>Editar noticia</h1>
 
       <form onSubmit={handleSubmit} className="admin-form">
-        <input placeholder="Título" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input
+          placeholder="Título"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
 
-        <input placeholder="Subtítulo" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} />
+        <input
+          placeholder="Subtítulo"
+          value={subtitle}
+          onChange={(e) => setSubtitle(e.target.value)}
+        />
 
-        <input placeholder="Categoría" value={category} onChange={(e) => setCategory(e.target.value)} />
+        <label>
+          Categoría
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            <option value="">Seleccionar categoría</option>
 
-        <input placeholder="Hashtags separados por coma" value={hashtags} onChange={(e) => setHashtags(e.target.value)} />
+            {categories.map((cat) => (
+              <option key={cat._id} value={cat.name}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </label>
 
-        <label>Imagen principal</label>
-        <input type="file" accept="image/*" onChange={handleImageUpload} />
+        <input
+          placeholder="Competencia. Ej: Mundial, Champions"
+          value={competition}
+          onChange={(e) => setCompetition(e.target.value)}
+        />
 
-        {uploading && <p>Subiendo imagen...</p>}
+        <label>
+          Filtrar imágenes por hashtag
+          <select
+            value={selectedImageHashtag}
+            onChange={(e) => handleImageHashtagChange(e.target.value)}
+          >
+            <option value="">Todas las imágenes</option>
+
+            {hashtagOptions.map((hashtag) => (
+              <option key={hashtag._id} value={hashtag.name}>
+                #{hashtag.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Imagen principal
+          <select
+            value={image}
+            onChange={(e) => setImage(e.target.value)}
+          >
+            <option value="">Seleccionar imagen</option>
+
+            {mediaOptions.map((media) => (
+              <option key={media._id} value={media.url}>
+                {media.title || media.url}
+              </option>
+            ))}
+          </select>
+        </label>
 
         {image && (
           <img
             src={image}
             alt="Preview"
-            style={{ width: '180px', borderRadius: '10px' }}
+            className="image-preview"
           />
         )}
+
+        <h2>Hashtags</h2>
+
+        {hashtagOptions.map((hashtag) => (
+          <label key={hashtag._id}>
+            <input
+              type="checkbox"
+              checked={selectedHashtags.includes(hashtag.name)}
+              onChange={() => toggleHashtag(hashtag.name)}
+            />
+            #{hashtag.name}
+          </label>
+        ))}
+
+        <h2>Equipos relacionados</h2>
+
+        <select
+          value={selectedTeam}
+          onChange={(e) => setSelectedTeam(e.target.value)}
+        >
+          <option value="">Seleccionar equipo</option>
+
+          {teamOptions.map((team) => (
+            <option key={team._id} value={team.name}>
+              {team.name}
+            </option>
+          ))}
+        </select>
+
+        <button type="button" onClick={addTeam}>
+          Agregar equipo
+        </button>
+
+        {teams.map((team, index) => (
+          <p key={`${team}-${index}`}>
+            {team}
+            <button
+              type="button"
+              onClick={() =>
+                setTeams(teams.filter((_, i) => i !== index))
+              }
+            >
+              Eliminar
+            </button>
+          </p>
+        ))}
 
         <h2>Secciones de la noticia</h2>
 
         <select
           value={sectionType}
-          onChange={(e) => setSectionType(e.target.value as NewsSection['type'])}
+          onChange={(e) =>
+            setSectionType(e.target.value as NewsSection['type'])
+          }
         >
           <option value="text">Texto</option>
           <option value="image-left">Imagen izquierda</option>
@@ -170,7 +382,28 @@ export default function EditNewsPage() {
         )}
 
         {sectionType !== 'text' && (
-          <input type="file" accept="image/*" onChange={handleSectionImageUpload} />
+          <>
+            <select
+              value={sectionImage}
+              onChange={(e) => setSectionImage(e.target.value)}
+            >
+              <option value="">Seleccionar imagen de sección</option>
+
+              {mediaOptions.map((media) => (
+                <option key={media._id} value={media.url}>
+                  {media.title || media.url}
+                </option>
+              ))}
+            </select>
+
+            {sectionImage && (
+              <img
+                src={sectionImage}
+                alt=""
+                className="section-image-preview"
+              />
+            )}
+          </>
         )}
 
         <button type="button" onClick={addSection}>
@@ -180,28 +413,18 @@ export default function EditNewsPage() {
         <p>Secciones creadas: {sections.length}</p>
 
         {sections.map((section, index) => (
-          <div
-            key={index}
-            style={{
-              border: '1px solid #334155',
-              padding: '1rem',
-              borderRadius: '8px',
-              marginBottom: '1rem'
-            }}
-          >
+          <div key={index} className="section-preview">
             <strong>{section.type}</strong>
 
-            {'content' in section && <p>{section.content}</p>}
+            {'content' in section && (
+              <p>{section.content}</p>
+            )}
 
             {'image' in section && section.image && (
               <img
                 src={section.image}
                 alt=""
-                style={{
-                  width: '150px',
-                  marginTop: '10px',
-                  borderRadius: '8px'
-                }}
+                className="section-image-preview"
               />
             )}
 
@@ -216,8 +439,8 @@ export default function EditNewsPage() {
           </div>
         ))}
 
-        <button type="submit">
-          Guardar cambios
+        <button type="submit" disabled={saving}>
+          {saving ? 'Guardando...' : 'Guardar cambios'}
         </button>
       </form>
     </div>
