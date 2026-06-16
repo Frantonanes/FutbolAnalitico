@@ -97,10 +97,10 @@ export default function AdminNewsPage() {
                   </td>
 
                   <td>
-  {item.createdAt
-    ? new Date(item.createdAt).toLocaleDateString('es-AR')
-    : '-'}
-</td>
+                    {item.createdAt
+                      ? new Date(item.createdAt).toLocaleDateString('es-AR')
+                      : '-'}
+                  </td>
 
                   <td>
                     <div className="admin-actions">
