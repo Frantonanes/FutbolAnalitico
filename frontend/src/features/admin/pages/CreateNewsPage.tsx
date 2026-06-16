@@ -62,6 +62,11 @@ export default function CreateNewsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
+  const [imageHashtagSearch, setImageHashtagSearch] = useState('')
+  const [hashtagSearch, setHashtagSearch] = useState('')
+  const [mediaSearch, setMediaSearch] = useState('')
+  const [teamSearch, setTeamSearch] = useState('')
+
   useEffect(() => {
     loadContent()
   }, [])
@@ -94,9 +99,7 @@ export default function CreateNewsPage() {
     }
   }
 
-  async function handleImageHashtagChange(
-    hashtag: string
-  ) {
+  async function handleImageHashtagChange(hashtag: string) {
     setSelectedImageHashtag(hashtag)
 
     try {
@@ -140,6 +143,7 @@ export default function CreateNewsPage() {
 
     setTeams([...teams, selectedTeam])
     setSelectedTeam('')
+    setTeamSearch('')
   }
 
   function addSection() {
@@ -183,9 +187,7 @@ export default function CreateNewsPage() {
     setSectionImage('')
   }
 
-  async function handleSubmit(
-    e: React.FormEvent
-  ) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
     if (!title.trim()) {
@@ -233,6 +235,10 @@ export default function CreateNewsPage() {
       setSectionType('text')
       setSectionContent('')
       setSectionImage('')
+      setImageHashtagSearch('')
+      setHashtagSearch('')
+      setMediaSearch('')
+      setTeamSearch('')
 
       loadContent()
     } catch (error) {
@@ -251,6 +257,30 @@ export default function CreateNewsPage() {
       </div>
     )
   }
+
+  const filteredImageHashtags = hashtagOptions.filter((hashtag) =>
+    hashtag.name
+      .toLowerCase()
+      .includes(imageHashtagSearch.toLowerCase())
+  )
+
+  const filteredHashtags = hashtagOptions.filter((hashtag) =>
+    hashtag.name
+      .toLowerCase()
+      .includes(hashtagSearch.toLowerCase())
+  )
+
+  const filteredMedia = mediaOptions.filter((media) =>
+    `${media.name || ''} ${media.url} ${media.hashtags?.join(' ') || ''}`
+      .toLowerCase()
+      .includes(mediaSearch.toLowerCase())
+  )
+
+  const filteredTeams = teamOptions.filter((team) =>
+    team.name
+      .toLowerCase()
+      .includes(teamSearch.toLowerCase())
+  )
 
   return (
     <div className="admin-form-page">
@@ -309,6 +339,15 @@ export default function CreateNewsPage() {
 
         <label>
           Filtrar imágenes por hashtag
+
+          <input
+            placeholder="Buscar hashtag. Ej: argentina"
+            value={imageHashtagSearch}
+            onChange={(e) =>
+              setImageHashtagSearch(e.target.value)
+            }
+          />
+
           <select
             value={selectedImageHashtag}
             onChange={(e) =>
@@ -321,7 +360,7 @@ export default function CreateNewsPage() {
               Todas las imágenes
             </option>
 
-            {hashtagOptions.map((hashtag) => (
+            {filteredImageHashtags.map((hashtag) => (
               <option
                 key={hashtag._id}
                 value={hashtag.name}
@@ -334,6 +373,15 @@ export default function CreateNewsPage() {
 
         <label>
           Imagen principal
+
+          <input
+            placeholder="Buscar imagen por nombre, URL o hashtag"
+            value={mediaSearch}
+            onChange={(e) =>
+              setMediaSearch(e.target.value)
+            }
+          />
+
           <select
             value={image}
             onChange={(e) =>
@@ -344,7 +392,7 @@ export default function CreateNewsPage() {
               Seleccionar imagen
             </option>
 
-            {mediaOptions.map((media) => (
+            {filteredMedia.map((media) => (
               <option
                 key={media._id}
                 value={media.url}
@@ -365,7 +413,15 @@ export default function CreateNewsPage() {
 
         <h2>Hashtags</h2>
 
-        {hashtagOptions.map((hashtag) => (
+        <input
+          placeholder="Buscar hashtag"
+          value={hashtagSearch}
+          onChange={(e) =>
+            setHashtagSearch(e.target.value)
+          }
+        />
+
+        {filteredHashtags.map((hashtag) => (
           <label key={hashtag._id}>
             <input
               type="checkbox"
@@ -382,6 +438,14 @@ export default function CreateNewsPage() {
 
         <h2>Equipos relacionados</h2>
 
+        <input
+          placeholder="Buscar equipo"
+          value={teamSearch}
+          onChange={(e) =>
+            setTeamSearch(e.target.value)
+          }
+        />
+
         <select
           value={selectedTeam}
           onChange={(e) =>
@@ -392,7 +456,7 @@ export default function CreateNewsPage() {
             Seleccionar equipo
           </option>
 
-          {teamOptions.map((team) => (
+          {filteredTeams.map((team) => (
             <option
               key={team._id}
               value={team.name}
@@ -473,7 +537,7 @@ export default function CreateNewsPage() {
                 Seleccionar imagen de sección
               </option>
 
-              {mediaOptions.map((media) => (
+              {filteredMedia.map((media) => (
                 <option
                   key={media._id}
                   value={media.url}
