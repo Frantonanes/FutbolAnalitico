@@ -5,26 +5,11 @@
 }
 
 .predictions-page__hero {
-  position: relative;
-  overflow: hidden;
   margin-bottom: 2.5rem;
-  padding: 3rem 2rem;
-  border-radius: 26px;
-  background:
-    radial-gradient(circle at top left, rgba(1, 195, 142, 0.2), transparent 38%),
-    linear-gradient(135deg, #132d46, #1a1e29);
+  padding: 2.4rem 2rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #132d46, #1a1e29);
   border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.predictions-page__hero::after {
-  content: "";
-  position: absolute;
-  right: -80px;
-  top: -80px;
-  width: 240px;
-  height: 240px;
-  border-radius: 50%;
-  background: rgba(1, 195, 142, 0.12);
 }
 
 .predictions-page__hero span {
@@ -39,17 +24,16 @@
 
 .predictions-page__hero h1 {
   color: #ffffff;
-  font-size: clamp(2.8rem, 6vw, 5rem);
-  line-height: 1;
-  letter-spacing: -0.06em;
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  line-height: 1.05;
   margin: 0 0 1rem;
 }
 
 .predictions-page__hero p {
   max-width: 680px;
   color: rgba(255, 255, 255, 0.76);
-  font-size: 1.15rem;
-  line-height: 1.7;
+  font-size: 1.05rem;
+  line-height: 1.65;
   margin: 0 0 1.4rem;
 }
 
@@ -70,10 +54,10 @@
 }
 
 .predictions-page__empty {
-  color: rgba(255, 255, 255, 0.75);
-  background: #132d46;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
   padding: 2rem;
   text-align: center;
   font-weight: 700;
@@ -91,8 +75,7 @@
   }
 
   .predictions-page__hero {
-    padding: 2.2rem 1.2rem;
-    border-radius: 20px;
+    padding: 2rem 1.2rem;
   }
 
   .predictions-page__grid {
