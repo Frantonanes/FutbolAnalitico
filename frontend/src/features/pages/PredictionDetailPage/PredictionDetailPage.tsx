@@ -10,7 +10,9 @@ export default function PredictionDetailPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
 
-  const [prediction, setPrediction] = useState<Prediction | null>(null)
+  const [prediction, setPrediction] =
+    useState<Prediction | null>(null)
+
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -27,40 +29,57 @@ export default function PredictionDetailPage() {
   }, [slug])
 
   if (loading) {
-    return <h1 className="prediction-detail__status">Cargando...</h1>
+    return (
+      <h1 className="prediction-detail__status">
+        Cargando...
+      </h1>
+    )
   }
 
   if (!prediction) {
-    return <h1 className="prediction-detail__status">Predicción no encontrada</h1>
+    return (
+      <h1 className="prediction-detail__status">
+        Predicción no encontrada
+      </h1>
+    )
   }
+
+  const title =
+    `${prediction.homeTeam} vs ${prediction.awayTeam}: predicción y análisis`
+
+  const description =
+    `Predicción de ${prediction.homeTeam} vs ${prediction.awayTeam}: probabilidades, datos del partido y análisis previo.`
 
   return (
     <>
       <Helmet>
-        <meta
-          property="og:title"
-          content={`${prediction.homeTeam} vs ${prediction.awayTeam} Prediction`}
-        />
-
-        <meta
-          property="og:description"
-          content={`${prediction.homeTeam} vs ${prediction.awayTeam} prediction, probabilities and analysis.`}
-        />
-
-        <meta property="og:type" content="article" />
-
-        <link
-          rel="canonical"
-          href={`https://futbolanalitico.com/predicciones/${prediction.slug}`}
-        />
-
         <title>
-          {prediction.homeTeam} vs {prediction.awayTeam} Prediction | Futbol Analítico
+          {title} | Futbol Analítico
         </title>
 
         <meta
           name="description"
-          content={`${prediction.homeTeam} vs ${prediction.awayTeam} prediction, probabilities and analysis.`}
+          content={description}
+        />
+
+        <meta
+          property="og:title"
+          content={title}
+        />
+
+        <meta
+          property="og:description"
+          content={description}
+        />
+
+        <meta
+          property="og:type"
+          content="article"
+        />
+
+        <link
+          rel="canonical"
+          href={`https://futbolanalitico.com/predicciones/${prediction.slug}`}
         />
       </Helmet>
 
@@ -89,8 +108,12 @@ export default function PredictionDetailPage() {
           <div className="prediction-detail__teams">
             <div className="prediction-detail__team">
               {prediction.homeLogo && (
-                <img src={prediction.homeLogo} alt={prediction.homeTeam} />
+                <img
+                  src={prediction.homeLogo}
+                  alt={prediction.homeTeam}
+                />
               )}
+
               <span>{prediction.homeTeam}</span>
             </div>
 
@@ -98,8 +121,12 @@ export default function PredictionDetailPage() {
 
             <div className="prediction-detail__team">
               {prediction.awayLogo && (
-                <img src={prediction.awayLogo} alt={prediction.awayTeam} />
+                <img
+                  src={prediction.awayLogo}
+                  alt={prediction.awayTeam}
+                />
               )}
+
               <span>{prediction.awayTeam}</span>
             </div>
           </div>
@@ -109,56 +136,82 @@ export default function PredictionDetailPage() {
           <div className="prediction-detail__probabilities">
             <div>
               <span>Local</span>
-              <strong>{prediction.homeProbability}%</strong>
+              <strong>
+                {prediction.homeProbability}%
+              </strong>
             </div>
 
             <div>
               <span>Empate</span>
-              <strong>{prediction.drawProbability}%</strong>
+              <strong>
+                {prediction.drawProbability}%
+              </strong>
             </div>
 
             <div>
               <span>Visitante</span>
-              <strong>{prediction.awayProbability}%</strong>
+              <strong>
+                {prediction.awayProbability}%
+              </strong>
             </div>
           </div>
 
           <div className="prediction-detail__probability-bar">
             <div
               className="prediction-detail__bar-home"
-              style={{ width: `${prediction.homeProbability}%` }}
+              style={{
+                width: `${prediction.homeProbability}%`
+              }}
             />
 
             <div
               className="prediction-detail__bar-draw"
-              style={{ width: `${prediction.drawProbability}%` }}
+              style={{
+                width: `${prediction.drawProbability}%`
+              }}
             />
 
             <div
               className="prediction-detail__bar-away"
-              style={{ width: `${prediction.awayProbability}%` }}
+              style={{
+                width: `${prediction.awayProbability}%`
+              }}
             />
           </div>
         </section>
 
         <section className="prediction-detail__blocks">
-          {(prediction.blocks || []).map((block, index) => (
-            <div key={`${block.title}-${index}`} className="block">
-              <h3>{block.title}</h3>
+          {(prediction.blocks || []).length === 0 ? (
+            <p>
+              No hay datos analíticos cargados para esta predicción.
+            </p>
+          ) : (
+            prediction.blocks.map((block, index) => (
+              <div
+                key={`${block.title}-${index}`}
+                className="block"
+              >
+                <h3>{block.title}</h3>
 
-              <div className="block-data-list">
-                {(block.items || []).map((item, itemIndex) => (
-                  <div
-                    key={`${item.label}-${itemIndex}`}
-                    className="block-data-item"
-                  >
-                    <span>{item.label}</span>
-                    <strong>{item.value}</strong>
-                  </div>
-                ))}
+                <div className="block-data-list">
+                  {(block.items || []).map(
+                    (item, itemIndex) => (
+                      <div
+                        key={`${item.label}-${itemIndex}`}
+                        className="block-data-item"
+                      >
+                        <span>{item.label}</span>
+
+                        <strong>
+                          {item.value}
+                        </strong>
+                      </div>
+                    )
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </section>
       </article>
     </>

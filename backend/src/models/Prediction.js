@@ -2,19 +2,33 @@ const mongoose = require('mongoose')
 
 const PredictionSchema = new mongoose.Schema(
   {
-    slug: String,
+    slug: {
+      type: String,
+      required: true,
+      trim: true
+    },
 
-    competition: String,
+    competition: {
+      type: String,
+      required: true,
+      trim: true
+    },
 
-    homeTeam: String,
-    awayTeam: String,
-
-    homeLogo: String,
-    awayLogo: String,
-
-      competitionId: {
+    competitionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Competition'
+    },
+
+    homeTeam: {
+      type: String,
+      required: true,
+      trim: true
+    },
+
+    awayTeam: {
+      type: String,
+      required: true,
+      trim: true
     },
 
     homeTeamId: {
@@ -27,11 +41,28 @@ const PredictionSchema = new mongoose.Schema(
       ref: 'Team'
     },
 
-    date: String,
+    homeLogo: String,
+    awayLogo: String,
 
-    homeProbability: Number,
-    drawProbability: Number,
-    awayProbability: Number,
+    date: {
+      type: String,
+      required: true
+    },
+
+    homeProbability: {
+      type: Number,
+      required: true
+    },
+
+    drawProbability: {
+      type: Number,
+      required: true
+    },
+
+    awayProbability: {
+      type: Number,
+      required: true
+    },
 
     blocks: [
       {
