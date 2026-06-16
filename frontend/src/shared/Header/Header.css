@@ -23,12 +23,17 @@
 }
 
 .logo {
-  color: #ffffff;
-  font-size: 1.75rem;
-  font-weight: 900;
-  letter-spacing: -0.04em;
+  display: flex;
+  align-items: center;
   text-decoration: none;
   white-space: nowrap;
+}
+
+.logo-img {
+  height: 48px;
+  width: auto;
+  display: block;
+  object-fit: contain;
 }
 
 .logo span {
@@ -261,17 +266,9 @@
     grid-row: 2;
   }
 
-  .logo {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-}
-
-.logo-img {
-  height: 10px;
-  width: auto;
-  display: block;
-}
+  .logo-img {
+    height: 42px;
+  }
 
   .header-bottom {
     top: 126px;
