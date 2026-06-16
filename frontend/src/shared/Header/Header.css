@@ -262,8 +262,16 @@
   }
 
   .logo {
-    font-size: 1.55rem;
-  }
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.logo-img {
+  height: 46px;
+  width: auto;
+  display: block;
+}
 
   .header-bottom {
     top: 126px;

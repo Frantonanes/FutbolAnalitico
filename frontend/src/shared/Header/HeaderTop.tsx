@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-
+import logo from '../../assets/FutbolAnaliticoLogo.png'
 import { loginAdmin } from '../../services/authService'
 
 import './Header.css'
@@ -45,8 +45,12 @@ export default function HeaderTop() {
   return (
     <header className="header-top">
       <Link to="/" className="logo">
-        Futbol<span>Analítico</span>
-      </Link>
+  <img
+    src={logo}
+    alt="Futbol Analítico"
+    className="logo-img"
+  />
+</Link>
 
       <form className="search-container" onSubmit={handleSearch}>
         <input
