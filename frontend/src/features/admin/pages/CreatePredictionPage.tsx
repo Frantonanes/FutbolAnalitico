@@ -162,30 +162,35 @@ export default function CreatePredictionPage() {
     }
 
     try {
-      await createPrediction(prediction)
+  setSaving(true)
 
-      alert('Predicción creada')
+  await createPrediction(prediction)
 
-      setCompetitionId('')
-      setHomeTeamId('')
-      setAwayTeamId('')
-      setDate('')
+  alert('Predicción creada')
 
-      setTeams([])
-      setBlocks([])
-      setItems([])
-      setBlockTitle('')
-      setItemLabel('')
-      setItemValue('')
+  setCompetitionId('')
+  setHomeTeamId('')
+  setAwayTeamId('')
+  setDate('')
 
-      setHomeProbability(50)
-      setDrawProbability(25)
-      setAwayProbability(25)
-    } catch (error) {
-      console.error(error)
-    }
-  }
+  setTeams([])
+  setBlocks([])
+  setItems([])
+  setBlockTitle('')
+  setItemLabel('')
+  setItemValue('')
 
+  setHomeProbability(50)
+  setDrawProbability(25)
+  setAwayProbability(25)
+} catch (error) {
+  console.error(error)
+  alert('Error creando predicción')
+} finally {
+  setSaving(false)
+}
+
+}
   return (
     <div className="admin-form-page">
       <h1>Crear Predicción</h1>
