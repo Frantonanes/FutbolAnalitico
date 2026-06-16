@@ -14,43 +14,58 @@ type Hashtag = {
 }
 
 export default function AdminHashtagsPage() {
-  const [hashtags, setHashtags] = useState<Hashtag[]>([])
+  const [hashtags, setHashtags] =
+    useState<Hashtag[]>([])
+
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(true)
-
-  async function loadHashtags() {
-    try {
-      const data = await getHashtags()
-      setHashtags(data)
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     loadHashtags()
   }, [])
+
+  async function loadHashtags() {
+    try {
+      setLoading(true)
+
+      const data = await getHashtags()
+
+      setHashtags(data)
+    } catch (error) {
+      console.error(error)
+      alert('Error cargando hashtags')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   async function handleSubmit(
     e: React.FormEvent
   ) {
     e.preventDefault()
 
-    if (!name.trim()) return
+    if (!name.trim()) {
+      alert('Ingresá un nombre')
+      return
+    }
 
     try {
+      setSaving(true)
+
       await createHashtag({
         name: name.trim(),
         slug: slugify(name)
       })
 
       setName('')
+
       loadHashtags()
     } catch (error) {
       console.error(error)
       alert('Error creando hashtag')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -91,13 +106,20 @@ export default function AdminHashtagsPage() {
           }
         />
 
-        <button type="submit">
-          Crear hashtag
+        <button
+          type="submit"
+          disabled={saving}
+        >
+          {saving
+            ? 'Creando...'
+            : 'Crear hashtag'}
         </button>
       </form>
 
       {loading ? (
-        <p>Cargando...</p>
+        <p>Cargando hashtags...</p>
+      ) : hashtags.length === 0 ? (
+        <p>No hay hashtags cargados.</p>
       ) : (
         <div className="admin-list">
           {hashtags.map((hashtag) => (

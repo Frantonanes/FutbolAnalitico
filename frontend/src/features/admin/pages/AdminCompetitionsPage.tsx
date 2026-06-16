@@ -16,23 +16,34 @@ type Competition = {
 }
 
 export default function AdminCompetitionsPage() {
-  const [competitions, setCompetitions] = useState<Competition[]>([])
+  const [competitions, setCompetitions] =
+    useState<Competition[]>([])
+
   const [name, setName] = useState('')
   const [logo, setLogo] = useState('')
-  const [uploading, setUploading] = useState(false)
 
-  async function loadCompetitions() {
-    try {
-      const data = await getCompetitions()
-      setCompetitions(data)
-    } catch (error) {
-      console.error(error)
-    }
-  }
+  const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     loadCompetitions()
   }, [])
+
+  async function loadCompetitions() {
+    try {
+      setLoading(true)
+
+      const data = await getCompetitions()
+
+      setCompetitions(data)
+    } catch (error) {
+      console.error(error)
+      alert('Error cargando competiciones')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   async function handleLogoUpload(
     e: React.ChangeEvent<HTMLInputElement>
@@ -47,6 +58,7 @@ export default function AdminCompetitionsPage() {
       const data = await uploadImage(file)
 
       setLogo(data.url)
+      e.target.value = ''
     } catch (error) {
       console.error(error)
       alert('Error subiendo logo')
@@ -65,7 +77,14 @@ export default function AdminCompetitionsPage() {
       return
     }
 
+    if (!logo) {
+      alert('Subí un logo')
+      return
+    }
+
     try {
+      setSaving(true)
+
       await createCompetition({
         name: name.trim(),
         slug: slugify(name),
@@ -79,6 +98,8 @@ export default function AdminCompetitionsPage() {
     } catch (error) {
       console.error(error)
       alert('Error creando competición')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -113,7 +134,7 @@ export default function AdminCompetitionsPage() {
         className="admin-form"
       >
         <input
-          placeholder="Nombre"
+          placeholder="Nombre de competición"
           value={name}
           onChange={(e) =>
             setName(e.target.value)
@@ -133,19 +154,28 @@ export default function AdminCompetitionsPage() {
         {logo && (
           <img
             src={logo}
-            alt=""
+            alt="Logo preview"
             className="competition-logo-preview"
           />
         )}
 
-        <button type="submit">
-          Crear competición
+        <button
+          type="submit"
+          disabled={saving || uploading}
+        >
+          {saving
+            ? 'Creando...'
+            : 'Crear competición'}
         </button>
       </form>
 
-      <div className="admin-list">
-        {competitions.map(
-          (competition) => (
+      {loading ? (
+        <p>Cargando competiciones...</p>
+      ) : competitions.length === 0 ? (
+        <p>No hay competiciones cargadas.</p>
+      ) : (
+        <div className="admin-list">
+          {competitions.map((competition) => (
             <div
               key={competition._id}
               className="section-preview"
@@ -153,7 +183,7 @@ export default function AdminCompetitionsPage() {
               {competition.logo && (
                 <img
                   src={competition.logo}
-                  alt=""
+                  alt={competition.name}
                   className="competition-logo-preview"
                 />
               )}
@@ -161,6 +191,10 @@ export default function AdminCompetitionsPage() {
               <strong>
                 {competition.name}
               </strong>
+
+              <p>
+                slug: {competition.slug}
+              </p>
 
               <button
                 type="button"
@@ -173,9 +207,9 @@ export default function AdminCompetitionsPage() {
                 Eliminar
               </button>
             </div>
-          )
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -102,7 +102,21 @@ exports.getMedia = async (req, res) => {
 
 exports.createMedia = async (req, res) => {
   try {
-    const media = await Media.create(req.body)
+    const { name, url, public_id, hashtags } = req.body
+
+    if (!name || !url) {
+      return res.status(400).json({
+        message: 'Nombre e imagen son obligatorios'
+      })
+    }
+
+    const media = await Media.create({
+      name,
+      url,
+      public_id,
+      hashtags
+    })
+
     res.status(201).json(media)
   } catch (error) {
     res.status(500).json(error)
@@ -111,11 +125,11 @@ exports.createMedia = async (req, res) => {
 
 exports.searchMediaByHashtag = async (req, res) => {
   try {
-    const hashtag = String(req.query.hashtag || '')
+    const search = String(req.query.hashtag || '')
       .replace('#', '')
       .trim()
 
-    if (!hashtag) {
+    if (!search) {
       const media = await Media.find().sort({
         createdAt: -1
       })
@@ -124,9 +138,19 @@ exports.searchMediaByHashtag = async (req, res) => {
     }
 
     const media = await Media.find({
-      hashtags: {
-        $in: [hashtag, `#${hashtag}`]
-      }
+      $or: [
+        {
+          name: {
+            $regex: search,
+            $options: 'i'
+          }
+        },
+        {
+          hashtags: {
+            $in: [search, `#${search}`]
+          }
+        }
+      ]
     }).sort({
       createdAt: -1
     })
@@ -154,7 +178,6 @@ exports.deleteMedia = async (req, res) => {
     res.status(500).json(error)
   }
 }
-
 /* ==========================
    COMPETITIONS
 ========================== */

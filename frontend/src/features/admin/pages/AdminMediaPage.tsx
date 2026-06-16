@@ -10,6 +10,7 @@ import './AdminForm.css'
 
 type Media = {
   _id: string
+  name: string
   url: string
   public_id?: string
   hashtags: string[]
@@ -17,24 +18,32 @@ type Media = {
 
 export default function AdminMediaPage() {
   const [media, setMedia] = useState<Media[]>([])
-  const [hashtags, setHashtags] =
-    useState('')
-  const [search, setSearch] = useState('')
-  const [uploading, setUploading] =
-    useState(false)
 
-  async function loadMedia() {
-    try {
-      const data = await getMedia()
-      setMedia(data)
-    } catch (error) {
-      console.error(error)
-    }
-  }
+  const [name, setName] = useState('')
+  const [hashtags, setHashtags] = useState('')
+  const [search, setSearch] = useState('')
+
+  const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     loadMedia()
   }, [])
+
+  async function loadMedia() {
+    try {
+      setLoading(true)
+
+      const data = await getMedia()
+
+      setMedia(data)
+    } catch (error) {
+      console.error(error)
+      alert('Error cargando imágenes')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   async function handleUpload(
     e: React.ChangeEvent<HTMLInputElement>
@@ -43,6 +52,12 @@ export default function AdminMediaPage() {
 
     if (!file) return
 
+    if (!name.trim()) {
+      alert('Ingresá un nombre para la imagen')
+      e.target.value = ''
+      return
+    }
+
     try {
       setUploading(true)
 
@@ -50,17 +65,18 @@ export default function AdminMediaPage() {
         await uploadImage(file)
 
       await createMedia({
+        name: name.trim(),
         url: uploaded.url,
-        public_id:
-          uploaded.public_id,
-
+        public_id: uploaded.public_id,
         hashtags: hashtags
           .split(',')
           .map((tag) => tag.trim())
           .filter(Boolean)
       })
 
+      setName('')
       setHashtags('')
+      e.target.value = ''
 
       loadMedia()
     } catch (error) {
@@ -84,27 +100,39 @@ export default function AdminMediaPage() {
       setMedia(data)
     } catch (error) {
       console.error(error)
+      alert('Error buscando imágenes')
     }
   }
+
   async function handleDelete(id: string) {
-  const confirmDelete = confirm('¿Eliminar imagen?')
+    const confirmDelete = confirm(
+      '¿Eliminar imagen?'
+    )
 
-  if (!confirmDelete) return
+    if (!confirmDelete) return
 
-  try {
-    await deleteMedia(id)
-    loadMedia()
-  } catch (error) {
-    console.error(error)
-    alert('Error eliminando imagen')
+    try {
+      await deleteMedia(id)
+      loadMedia()
+    } catch (error) {
+      console.error(error)
+      alert('Error eliminando imagen')
+    }
   }
-}
 
   return (
     <div className="admin-form-page">
       <h1>Biblioteca multimedia</h1>
 
       <div className="admin-form">
+        <input
+          placeholder="Nombre de la imagen"
+          value={name}
+          onChange={(e) =>
+            setName(e.target.value)
+          }
+        />
+
         <input
           placeholder="Hashtags separados por coma"
           value={hashtags}
@@ -117,6 +145,7 @@ export default function AdminMediaPage() {
           type="file"
           accept="image/*"
           onChange={handleUpload}
+          disabled={uploading}
         />
 
         {uploading && (
@@ -130,7 +159,7 @@ export default function AdminMediaPage() {
         }}
       >
         <input
-          placeholder="Buscar por hashtag"
+          placeholder="Buscar por nombre o hashtag"
           value={search}
           onChange={(e) =>
             setSearch(e.target.value)
@@ -144,36 +173,48 @@ export default function AdminMediaPage() {
           Buscar
         </button>
       </div>
-          
-      <div className="media-grid">
-  {media.map((item) => (
-    <div
-      key={item._id}
-      className="media-card"
-    >
-      <img
-        src={item.url}
-        alt=""
-        className="media-image"
-      />
 
-      <div className="media-tags">
-        {item.hashtags?.map((tag) => (
-          <span key={tag}>
-            #{tag}
-          </span>
-        ))}
-      </div>
+      {loading ? (
+        <p>Cargando imágenes...</p>
+      ) : media.length === 0 ? (
+        <p>No hay imágenes cargadas.</p>
+      ) : (
+        <div className="media-grid">
+          {media.map((item) => (
+            <div
+              key={item._id}
+              className="media-card"
+            >
+              <img
+                src={item.url}
+                alt={item.name}
+                className="media-image"
+              />
 
-      <button
-        type="button"
-        onClick={() => handleDelete(item._id)}
-      >
-        Eliminar
-      </button>
-    </div>
-  ))}
-</div>
+              <strong>
+                {item.name || 'Sin nombre'}
+              </strong>
+
+              <div className="media-tags">
+                {item.hashtags?.map((tag) => (
+                  <span key={tag}>
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handleDelete(item._id)
+                }
+              >
+                Eliminar
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

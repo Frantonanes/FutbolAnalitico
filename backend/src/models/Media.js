@@ -2,7 +2,16 @@ const mongoose = require('mongoose')
 
 const MediaSchema = new mongoose.Schema(
   {
-    url: String,
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+
+    url: {
+      type: String,
+      required: true
+    },
 
     public_id: String,
 

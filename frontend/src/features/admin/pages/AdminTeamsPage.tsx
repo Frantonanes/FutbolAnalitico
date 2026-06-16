@@ -29,10 +29,18 @@ export default function AdminTeamsPage() {
   const [logo, setLogo] = useState('')
   const [competitionId, setCompetitionId] = useState('')
 
+  const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    loadData()
+  }, [])
 
   async function loadData() {
     try {
+      setLoading(true)
+
       const [competitionsData, teamsData] =
         await Promise.all([
           getCompetitions(),
@@ -43,12 +51,11 @@ export default function AdminTeamsPage() {
       setTeams(teamsData)
     } catch (error) {
       console.error(error)
+      alert('Error cargando equipos')
+    } finally {
+      setLoading(false)
     }
   }
-
-  useEffect(() => {
-    loadData()
-  }, [])
 
   async function handleLogoUpload(
     e: React.ChangeEvent<HTMLInputElement>
@@ -63,6 +70,7 @@ export default function AdminTeamsPage() {
       const data = await uploadImage(file)
 
       setLogo(data.url)
+      e.target.value = ''
     } catch (error) {
       console.error(error)
       alert('Error subiendo logo')
@@ -86,7 +94,14 @@ export default function AdminTeamsPage() {
       return
     }
 
+    if (!logo) {
+      alert('Subí un logo')
+      return
+    }
+
     try {
+      setSaving(true)
+
       await createTeam({
         name: name.trim(),
         slug: slugify(name),
@@ -102,6 +117,8 @@ export default function AdminTeamsPage() {
     } catch (error) {
       console.error(error)
       alert('Error creando equipo')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -162,16 +179,14 @@ export default function AdminTeamsPage() {
             Seleccionar competición
           </option>
 
-          {competitions.map(
-            (competition) => (
-              <option
-                key={competition._id}
-                value={competition._id}
-              >
-                {competition.name}
-              </option>
-            )
-          )}
+          {competitions.map((competition) => (
+            <option
+              key={competition._id}
+              value={competition._id}
+            >
+              {competition.name}
+            </option>
+          ))}
         </select>
 
         <input
@@ -187,49 +202,58 @@ export default function AdminTeamsPage() {
         {logo && (
           <img
             src={logo}
-            alt=""
+            alt="Logo preview"
             className="competition-logo-preview"
           />
         )}
 
-        <button type="submit">
-          Crear equipo
+        <button
+          type="submit"
+          disabled={saving || uploading}
+        >
+          {saving ? 'Creando...' : 'Crear equipo'}
         </button>
       </form>
 
-      <div className="admin-list">
-        {teams.map((team) => (
-          <div
-            key={team._id}
-            className="section-preview"
-          >
-            {team.logo && (
-              <img
-                src={team.logo}
-                alt=""
-                className="competition-logo-preview"
-              />
-            )}
-
-            <strong>{team.name}</strong>
-
-            <p>
-              {getCompetitionName(
-                team.competitionId
-              )}
-            </p>
-
-            <button
-              type="button"
-              onClick={() =>
-                handleDelete(team._id)
-              }
+      {loading ? (
+        <p>Cargando equipos...</p>
+      ) : teams.length === 0 ? (
+        <p>No hay equipos cargados.</p>
+      ) : (
+        <div className="admin-list">
+          {teams.map((team) => (
+            <div
+              key={team._id}
+              className="section-preview"
             >
-              Eliminar
-            </button>
-          </div>
-        ))}
-      </div>
+              {team.logo && (
+                <img
+                  src={team.logo}
+                  alt={team.name}
+                  className="competition-logo-preview"
+                />
+              )}
+
+              <strong>{team.name}</strong>
+
+              <p>
+                {getCompetitionName(
+                  team.competitionId
+                )}
+              </p>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handleDelete(team._id)
+                }
+              >
+                Eliminar
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
