@@ -154,10 +154,10 @@ export async function createMedia(
 }
 
 export async function searchMedia(
-  hashtag: string
+  search: string
 ) {
   const response = await fetch(
-    `${API_URL}/content/media/search?hashtag=${hashtag}`
+    `${API_URL}/content/media/search?hashtag=${encodeURIComponent(search)}`
   )
 
   if (!response.ok) {
