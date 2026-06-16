@@ -46,5 +46,5 @@ export type News = {
   teams?: string[]
   hashtags: string[]
 
-  createdAt: string
+    createdAt?: string
 }
