@@ -15,7 +15,30 @@
   border-color: #01c38e;
   box-shadow: 0 14px 32px rgba(1, 195, 142, 0.1);
 }
+.prediction-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+}
 
+.prediction-card__top .prediction-card__competition {
+  margin-bottom: 0;
+}
+
+.prediction-card__status {
+  display: inline-block;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.14);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
 .prediction-card__competition {
   display: inline-block;
   margin-bottom: 1.2rem;
@@ -92,7 +115,30 @@
   font-size: 1rem;
   font-weight: 900;
 }
+.prediction-card__result {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(34, 197, 94, 0.08);
+  text-align: center;
+}
 
+.prediction-card__result span {
+  display: block;
+  color: var(--text);
+  opacity: 0.75;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.prediction-card__result strong {
+  display: block;
+  color: var(--text-heading);
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
 .prediction-card__bar {
   display: flex;
   height: 14px;
@@ -148,11 +194,16 @@
   .prediction-card {
     padding: 1.2rem;
   }
-
+.prediction-card__top {
+  align-items: flex-start;
+  flex-direction: column;
+}
   .prediction-card__header {
     gap: 0.6rem;
   }
-
+.prediction-card__top .prediction-card__competition {
+  margin-bottom: 0;
+}
   .team-logo {
     width: 54px;
     height: 54px;
