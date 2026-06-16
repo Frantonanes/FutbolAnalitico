@@ -10,7 +10,9 @@ export default function NewsDetailPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
 
-  const [news, setNews] = useState<News | null>(null)
+  const [news, setNews] =
+    useState<News | null>(null)
+
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -27,46 +29,83 @@ export default function NewsDetailPage() {
   }, [slug])
 
   if (loading) {
-    return <h1 className="news-detail__status">Cargando...</h1>
+    return (
+      <h1 className="news-detail__status">
+        Cargando...
+      </h1>
+    )
   }
 
   if (!news) {
-    return <h1 className="news-detail__status">Noticia no encontrada</h1>
+    return (
+      <h1 className="news-detail__status">
+        Noticia no encontrada
+      </h1>
+    )
   }
 
   const publishedDate = news.createdAt
-    ? new Date(news.createdAt).toLocaleDateString('es-AR', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-      })
+    ? new Date(news.createdAt).toLocaleDateString(
+        'es-AR',
+        {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric'
+        }
+      )
     : null
 
   const publishedTime = news.createdAt
-    ? new Date(news.createdAt).toLocaleTimeString('es-AR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+    ? new Date(news.createdAt).toLocaleTimeString(
+        'es-AR',
+        {
+          hour: '2-digit',
+          minute: '2-digit'
+        }
+      )
     : null
+
+  const description =
+    news.subtitle ||
+    `Últimas noticias de fútbol en Futbol Analítico.`
 
   return (
     <>
       <Helmet>
-        <meta property="og:title" content={news.title} />
-        <meta property="og:description" content={news.subtitle} />
-        <meta property="og:image" content={news.image} />
-        <meta property="og:type" content="article" />
+        <title>
+          {news.title} | Futbol Analítico
+        </title>
+
+        <meta
+          name="description"
+          content={description}
+        />
+
+        <meta
+          property="og:title"
+          content={news.title}
+        />
+
+        <meta
+          property="og:description"
+          content={description}
+        />
+
+        {news.image && (
+          <meta
+            property="og:image"
+            content={news.image}
+          />
+        )}
+
+        <meta
+          property="og:type"
+          content="article"
+        />
 
         <link
           rel="canonical"
           href={`https://futbolanalitico.com/noticias/${news.slug}`}
-        />
-
-        <title>{news.title} | Futbol Analítico</title>
-
-        <meta
-          name="description"
-          content={news.subtitle}
         />
       </Helmet>
 
@@ -92,86 +131,114 @@ export default function NewsDetailPage() {
         )}
 
         <header className="news-detail__header">
-          <span className="news-detail__category">
-            {news.category}
-          </span>
+          <div className="news-detail__meta">
+            {news.category && (
+              <span className="news-detail__category">
+                {news.category}
+              </span>
+            )}
+
+            {news.competition && (
+              <span className="news-detail__competition">
+                {news.competition}
+              </span>
+            )}
+          </div>
 
           <h1 className="news-detail__title">
             {news.title}
           </h1>
 
-          <p className="news-detail__subtitle">
-            {news.subtitle}
-          </p>
+          {news.subtitle && (
+            <p className="news-detail__subtitle">
+              {news.subtitle}
+            </p>
+          )}
 
           {publishedDate && publishedTime && (
             <p className="news-detail__date">
               Publicado el {publishedDate} · {publishedTime} hs
             </p>
           )}
+
+          {news.teams?.length > 0 && (
+            <div className="news-detail__teams">
+              {news.teams.map((team) => (
+                <span key={team}>
+                  {team}
+                </span>
+              ))}
+            </div>
+          )}
         </header>
 
         <div className="news-detail__content">
-          {(news.sections || []).map((section, index) => {
-            switch (section.type) {
-              case 'text':
-                return (
-                  <p
-                    key={index}
-                    className="news-detail__text"
-                  >
-                    {section.content}
-                  </p>
-                )
+          {(news.sections || []).length === 0 ? (
+            <p className="news-detail__text">
+              Esta noticia todavía no tiene contenido cargado.
+            </p>
+          ) : (
+            news.sections.map((section, index) => {
+              switch (section.type) {
+                case 'text':
+                  return (
+                    <p
+                      key={index}
+                      className="news-detail__text"
+                    >
+                      {section.content}
+                    </p>
+                  )
 
-              case 'image-right':
-                return (
-                  <section
-                    key={index}
-                    className="news-detail__section"
-                  >
-                    <p>{section.content}</p>
+                case 'image-right':
+                  return (
+                    <section
+                      key={index}
+                      className="news-detail__section"
+                    >
+                      <p>{section.content}</p>
 
-                    {section.image && (
-                      <img
-                        src={section.image}
-                        alt=""
-                      />
-                    )}
-                  </section>
-                )
+                      {section.image && (
+                        <img
+                          src={section.image}
+                          alt=""
+                        />
+                      )}
+                    </section>
+                  )
 
-              case 'image-left':
-                return (
-                  <section
-                    key={index}
-                    className="news-detail__section news-detail__section--reverse"
-                  >
-                    {section.image && (
-                      <img
-                        src={section.image}
-                        alt=""
-                      />
-                    )}
+                case 'image-left':
+                  return (
+                    <section
+                      key={index}
+                      className="news-detail__section news-detail__section--reverse"
+                    >
+                      {section.image && (
+                        <img
+                          src={section.image}
+                          alt=""
+                        />
+                      )}
 
-                    <p>{section.content}</p>
-                  </section>
-                )
+                      <p>{section.content}</p>
+                    </section>
+                  )
 
-              case 'image-full':
-                return section.image ? (
-                  <img
-                    key={index}
-                    className="news-detail__image-full"
-                    src={section.image}
-                    alt=""
-                  />
-                ) : null
+                case 'image-full':
+                  return section.image ? (
+                    <img
+                      key={index}
+                      className="news-detail__image-full"
+                      src={section.image}
+                      alt=""
+                    />
+                  ) : null
 
-              default:
-                return null
-            }
-          })}
+                default:
+                  return null
+              }
+            })
+          )}
         </div>
 
         {news.hashtags?.length > 0 && (
