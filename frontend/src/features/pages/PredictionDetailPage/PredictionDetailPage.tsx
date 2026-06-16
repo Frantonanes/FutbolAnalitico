@@ -44,11 +44,16 @@ export default function PredictionDetailPage() {
     )
   }
 
-  const title =
-    `${prediction.homeTeam} vs ${prediction.awayTeam}: predicción y análisis`
+  const isFinished =
+    prediction.status === 'finished'
 
-  const description =
-    `Predicción de ${prediction.homeTeam} vs ${prediction.awayTeam}: probabilidades, datos del partido y análisis previo.`
+  const title = isFinished
+    ? `${prediction.homeTeam} vs ${prediction.awayTeam}: resultado final`
+    : `${prediction.homeTeam} vs ${prediction.awayTeam}: predicción y análisis`
+
+  const description = isFinished
+    ? `Resultado final de ${prediction.homeTeam} vs ${prediction.awayTeam}: ${prediction.finalScore}.`
+    : `Predicción de ${prediction.homeTeam} vs ${prediction.awayTeam}: probabilidades, datos del partido y análisis previo.`
 
   return (
     <>
@@ -93,9 +98,17 @@ export default function PredictionDetailPage() {
         </button>
 
         <header className="prediction-detail__header">
-          <span className="competition">
-            {prediction.competition}
-          </span>
+          <div className="prediction-detail__meta">
+            <span className="competition">
+              {prediction.competition}
+            </span>
+
+            {isFinished && (
+              <span className="prediction-detail__finished-badge">
+                Partido finalizado
+              </span>
+            )}
+          </div>
 
           <h1 className="prediction-detail__title">
             {prediction.homeTeam} vs {prediction.awayTeam}
@@ -132,58 +145,68 @@ export default function PredictionDetailPage() {
           </div>
         </header>
 
-        <section className="prediction-detail__summary">
-          <div className="prediction-detail__probabilities">
-            <div>
-              <span>Local</span>
-              <strong>
-                {prediction.homeProbability}%
-              </strong>
+        {isFinished ? (
+          <section className="prediction-detail__result">
+            <span>Resultado final</span>
+
+            <strong>
+              {prediction.finalScore}
+            </strong>
+          </section>
+        ) : (
+          <section className="prediction-detail__summary">
+            <div className="prediction-detail__probabilities">
+              <div>
+                <span>Local</span>
+                <strong>
+                  {prediction.homeProbability}%
+                </strong>
+              </div>
+
+              <div>
+                <span>Empate</span>
+                <strong>
+                  {prediction.drawProbability}%
+                </strong>
+              </div>
+
+              <div>
+                <span>Visitante</span>
+                <strong>
+                  {prediction.awayProbability}%
+                </strong>
+              </div>
             </div>
 
-            <div>
-              <span>Empate</span>
-              <strong>
-                {prediction.drawProbability}%
-              </strong>
+            <div className="prediction-detail__probability-bar">
+              <div
+                className="prediction-detail__bar-home"
+                style={{
+                  width: `${prediction.homeProbability}%`
+                }}
+              />
+
+              <div
+                className="prediction-detail__bar-draw"
+                style={{
+                  width: `${prediction.drawProbability}%`
+                }}
+              />
+
+              <div
+                className="prediction-detail__bar-away"
+                style={{
+                  width: `${prediction.awayProbability}%`
+                }}
+              />
             </div>
-
-            <div>
-              <span>Visitante</span>
-              <strong>
-                {prediction.awayProbability}%
-              </strong>
-            </div>
-          </div>
-
-          <div className="prediction-detail__probability-bar">
-            <div
-              className="prediction-detail__bar-home"
-              style={{
-                width: `${prediction.homeProbability}%`
-              }}
-            />
-
-            <div
-              className="prediction-detail__bar-draw"
-              style={{
-                width: `${prediction.drawProbability}%`
-              }}
-            />
-
-            <div
-              className="prediction-detail__bar-away"
-              style={{
-                width: `${prediction.awayProbability}%`
-              }}
-            />
-          </div>
-        </section>
+          </section>
+        )}
 
         <section className="prediction-detail__blocks">
           {(prediction.blocks || []).length === 0 ? (
             <p>
-              No hay datos analíticos cargados para esta predicción.
+              No hay datos analíticos cargados para este partido.
             </p>
           ) : (
             prediction.blocks.map((block, index) => (
