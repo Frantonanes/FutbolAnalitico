@@ -161,9 +161,9 @@ export default function NewsDetailPage() {
             </p>
           )}
 
-          {news.teams?.length > 0 && (
-            <div className="news-detail__teams">
-              {news.teams.map((team) => (
+          {news.teams && news.teams.length > 0 && (
+              <div>
+                {news.teams.map((team) => (
                 <span key={team}>
                   {team}
                 </span>
