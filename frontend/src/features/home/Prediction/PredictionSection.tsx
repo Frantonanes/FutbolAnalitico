@@ -8,20 +8,30 @@ import { getPredictions } from '../../../services/predictionService'
 import type { Prediction } from '../../../shared/types/Prediction'
 
 export default function PredictionsSection() {
-  const [predictions, setPredictions] = useState<Prediction[]>([])
+  const [predictions, setPredictions] =
+    useState<Prediction[]>([])
+
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function loadPredictions() {
-      try {
-        const data = await getPredictions()
-        setPredictions(data.slice(0, 6))
-      } catch (error) {
-        console.error(error)
-      }
-    }
-
     loadPredictions()
   }, [])
+
+  async function loadPredictions() {
+    try {
+      setLoading(true)
+
+      const data = await getPredictions()
+
+      setPredictions(data.slice(0, 6))
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) return null
 
   if (predictions.length === 0) return null
 
@@ -31,7 +41,10 @@ export default function PredictionsSection() {
         <div className="predictions-section__header">
           <div>
             <span>Pronósticos</span>
-            <h2>Predicciones de la jornada</h2>
+
+            <h2>
+              Predicciones de la jornada
+            </h2>
           </div>
 
           <Link

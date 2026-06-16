@@ -3,14 +3,14 @@
   background: #1a1e29;
 }
 
-.container {
-  max-width: 1400px;
+.predictions-section .container {
+  max-width: 1200px;
   margin: 0 auto;
 }
 
 .predictions-section__header {
   display: flex;
-  align-items: end;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 2rem;
@@ -28,9 +28,8 @@
 
 .predictions-section__header h2 {
   color: #ffffff;
-  font-size: clamp(2rem, 4vw, 3.2rem);
-  line-height: 1;
-  letter-spacing: -0.04em;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.05;
   margin: 0;
 }
 
@@ -42,6 +41,7 @@
   text-decoration: none;
   font-weight: 800;
   transition: 0.2s ease;
+  white-space: nowrap;
 }
 
 .predictions-section__link:hover {
