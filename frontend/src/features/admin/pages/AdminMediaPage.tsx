@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import {
   getMedia,
   createMedia,
-  searchMedia
+  searchMedia,
+  deleteMedia
 } from '../../../services/contentService'
 import { uploadImage } from '../../../services/uploadService'
 import './AdminForm.css'
@@ -85,6 +86,19 @@ export default function AdminMediaPage() {
       console.error(error)
     }
   }
+  async function handleDelete(id: string) {
+  const confirmDelete = confirm('¿Eliminar imagen?')
+
+  if (!confirmDelete) return
+
+  try {
+    await deleteMedia(id)
+    loadMedia()
+  } catch (error) {
+    console.error(error)
+    alert('Error eliminando imagen')
+  }
+}
 
   return (
     <div className="admin-form-page">
@@ -130,31 +144,36 @@ export default function AdminMediaPage() {
           Buscar
         </button>
       </div>
-
+          
       <div className="media-grid">
-        {media.map((item) => (
-          <div
-            key={item._id}
-            className="media-card"
-          >
-            <img
-              src={item.url}
-              alt=""
-              className="media-image"
-            />
+  {media.map((item) => (
+    <div
+      key={item._id}
+      className="media-card"
+    >
+      <img
+        src={item.url}
+        alt=""
+        className="media-image"
+      />
 
-            <div className="media-tags">
-              {item.hashtags?.map(
-                (tag) => (
-                  <span key={tag}>
-                    #{tag}
-                  </span>
-                )
-              )}
-            </div>
-          </div>
+      <div className="media-tags">
+        {item.hashtags?.map((tag) => (
+          <span key={tag}>
+            #{tag}
+          </span>
         ))}
       </div>
+
+      <button
+        type="button"
+        onClick={() => handleDelete(item._id)}
+      >
+        Eliminar
+      </button>
+    </div>
+  ))}
+</div>
     </div>
   )
 }
