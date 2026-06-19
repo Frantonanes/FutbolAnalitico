@@ -11,6 +11,7 @@ const newsRoutes = require('./routes/news.routes')
 const predictionRoutes = require('./routes/prediction.routes')
 const uploadRoutes = require('./routes/upload.routes')
 const contentRoutes = require('./routes/content.routes')
+const writerRoutes = require('./routes/writer.routes')
 
 const app = express()
 
@@ -24,7 +25,7 @@ app.use('/predictions', predictionRoutes)
 app.use('/upload', uploadRoutes)
 app.use('/content', contentRoutes)
 app.use('/auth', authRoutes)
-
+app.use('/writers', writerRoutes)
 app.get('/', (req, res) => {
   res.json({
     message: 'API FutbolAnalitico'
