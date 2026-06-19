@@ -10,6 +10,12 @@ import {
 import './AdminForm.css'
 import { slugify } from '../../../shared/utils/slugify'
 import type { NewsSection } from '../../../shared/types/News'
+import {
+  getWriters
+} from '../../../services/writerService'
+import type {
+  Writer
+} from '../../../services/writerService'
 
 type Category = {
   _id: string
@@ -39,11 +45,13 @@ export default function CreateNewsPage() {
   const [subtitle, setSubtitle] = useState('')
   const [category, setCategory] = useState('')
   const [competition, setCompetition] = useState('')
+  const [authorId, setAuthorId] = useState('')
 
   const [categories, setCategories] = useState<Category[]>([])
   const [hashtagOptions, setHashtagOptions] = useState<Hashtag[]>([])
   const [mediaOptions, setMediaOptions] = useState<Media[]>([])
   const [teamOptions, setTeamOptions] = useState<Team[]>([])
+  const [writerOptions, setWriterOptions] = useState<Writer[]>([])
 
   const [selectedHashtags, setSelectedHashtags] = useState<string[]>([])
   const [selectedImageHashtag, setSelectedImageHashtag] = useState('')
@@ -79,18 +87,21 @@ export default function CreateNewsPage() {
         categoriesData,
         hashtagsData,
         mediaData,
-        teamsData
+        teamsData,
+        writersData
       ] = await Promise.all([
         getCategories(),
         getHashtags(),
         getMedia(),
-        getTeams()
+        getTeams(),
+        getWriters()
       ])
 
       setCategories(categoriesData)
       setHashtagOptions(hashtagsData)
       setMediaOptions(mediaData)
       setTeamOptions(teamsData)
+      setWriterOptions(writersData)
     } catch (error) {
       console.error(error)
       alert('Error cargando datos del formulario')
@@ -200,6 +211,11 @@ export default function CreateNewsPage() {
       return
     }
 
+    if (!authorId) {
+      alert('Seleccioná un escritor')
+      return
+    }
+
     if (!image) {
       alert('Seleccioná una imagen principal')
       return
@@ -214,6 +230,7 @@ export default function CreateNewsPage() {
         subtitle,
         category,
         competition,
+        authorId,
         image,
         hashtags: selectedHashtags,
         teams,
@@ -226,6 +243,7 @@ export default function CreateNewsPage() {
       setSubtitle('')
       setCategory('')
       setCompetition('')
+      setAuthorId('')
       setImage('')
       setSelectedHashtags([])
       setSelectedImageHashtag('')
@@ -305,6 +323,33 @@ export default function CreateNewsPage() {
             setSubtitle(e.target.value)
           }
         />
+
+        <label>
+          Escritor
+          <select
+            value={authorId}
+            onChange={(e) =>
+              setAuthorId(e.target.value)
+            }
+            required
+          >
+            <option value="">
+              Seleccionar escritor
+            </option>
+
+            {writerOptions.map((writer) => (
+              <option
+                key={writer._id}
+                value={writer._id}
+              >
+                {writer.name}
+                {writer.role
+                  ? ` · ${writer.role}`
+                  : ''}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <label>
           Categoría
