@@ -22,6 +22,7 @@ import AdminHashtagsPage from './features/admin/pages/AdminHashtagsPage'
 import AdminMediaPage from './features/admin/pages/AdminMediaPage'
 import AdminCompetitionsPage from './features/admin/pages/AdminCompetitionsPage'
 import AdminTeamsPage from './features/admin/pages/AdminTeamsPage'
+import AdminWritersPage from './features/admin/pages/AdminWritersPage'
 
 function App() {
   return (
@@ -43,6 +44,11 @@ function App() {
 
   <Route path="/admin" element={<AdminLayout />}>
     <Route index element={<DashboardPage />} />
+
+    <Route
+  path="escritores"
+  element={<AdminWritersPage />}
+/>
 
     <Route path="noticias" element={<AdminNewsPage />} />
     <Route path="noticias/crear" element={<CreateNewsPage />} />

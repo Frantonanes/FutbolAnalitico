@@ -53,8 +53,18 @@ export default function AdminLayout() {
   <Link to="/admin/hashtags">
     Hashtags
   </Link>
+    <Link to="/admin/hashtags">
+  Hashtags
+    </Link>
 
-  <Link to="/admin/media">
+    <Link to="/admin/escritores">
+      Escritores
+    </Link>
+
+    <Link to="/admin/media">
+      Biblioteca multimedia
+    </Link>
+      <Link to="/admin/media">
     Biblioteca multimedia
   </Link>
 
