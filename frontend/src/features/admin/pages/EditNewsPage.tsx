@@ -17,6 +17,8 @@ import {
   getTeams
 } from '../../../services/contentService'
 
+import { getWriters } from '../../../services/writerService'
+
 import { slugify } from '../../../shared/utils/slugify'
 import type { NewsSection } from '../../../shared/types/News'
 
@@ -45,6 +47,13 @@ type Team = {
   logo?: string
 }
 
+type Writer = {
+  _id: string
+  name: string
+  role?: string
+  image?: string
+}
+
 export default function EditNewsPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -54,6 +63,7 @@ export default function EditNewsPage() {
   const [category, setCategory] = useState('')
   const [competition, setCompetition] = useState('')
   const [image, setImage] = useState('')
+  const [authorId, setAuthorId] = useState('')
 
   const [categories, setCategories] = useState<Category[]>([])
   const [hashtagOptions, setHashtagOptions] =
@@ -62,6 +72,8 @@ export default function EditNewsPage() {
     useState<Media[]>([])
   const [teamOptions, setTeamOptions] =
     useState<Team[]>([])
+  const [writerOptions, setWriterOptions] =
+    useState<Writer[]>([])
 
   const [selectedHashtags, setSelectedHashtags] =
     useState<string[]>([])
@@ -98,13 +110,15 @@ export default function EditNewsPage() {
         categoriesData,
         hashtagsData,
         mediaData,
-        teamsData
+        teamsData,
+        writersData
       ] = await Promise.all([
         getNewsById(id),
         getCategories(),
         getHashtags(),
         getMedia(),
-        getTeams()
+        getTeams(),
+        getWriters()
       ])
 
       setTitle(article.title || '')
@@ -116,10 +130,17 @@ export default function EditNewsPage() {
       setTeams(article.teams || [])
       setSections(article.sections || [])
 
+      if (typeof article.authorId === 'string') {
+        setAuthorId(article.authorId)
+      } else {
+        setAuthorId(article.authorId?._id || '')
+      }
+
       setCategories(categoriesData)
       setHashtagOptions(hashtagsData)
       setMediaOptions(mediaData)
       setTeamOptions(teamsData)
+      setWriterOptions(writersData)
     } catch (error) {
       console.error(error)
       alert('Error cargando noticia')
@@ -234,6 +255,11 @@ export default function EditNewsPage() {
       return
     }
 
+    if (!authorId) {
+      alert('Seleccioná un escritor')
+      return
+    }
+
     if (!image) {
       alert('Seleccioná una imagen principal')
       return
@@ -249,6 +275,7 @@ export default function EditNewsPage() {
         category,
         competition,
         image,
+        authorId,
         hashtags: selectedHashtags,
         teams,
         sections
@@ -296,6 +323,30 @@ export default function EditNewsPage() {
             setSubtitle(e.target.value)
           }
         />
+
+        <label>
+          Escritor
+          <select
+            value={authorId}
+            onChange={(e) =>
+              setAuthorId(e.target.value)
+            }
+          >
+            <option value="">
+              Seleccionar escritor
+            </option>
+
+            {writerOptions.map((writer) => (
+              <option
+                key={writer._id}
+                value={writer._id}
+              >
+                {writer.name}
+                {writer.role ? ` · ${writer.role}` : ''}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <label>
           Categoría
@@ -559,8 +610,7 @@ export default function EditNewsPage() {
         ))}
 
         <button
-          type="submit"
-          disabled={saving}
+          type="submit" disabled={saving}
         >
           {saving
             ? 'Guardando...'
