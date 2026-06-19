@@ -1,7 +1,11 @@
-import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import type { News } from '../../../shared/types/News'
+import {
+  useNavigate,
+  useParams
+} from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
+
+import type { News } from '../../../shared/types/News'
 import { getNewsBySlug } from '../../../services/newsService'
 
 import './NewsDetailPage.css'
@@ -12,20 +16,15 @@ export default function NewsDetailPage() {
 
   const [news, setNews] =
     useState<News | null>(null)
-
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!slug) return
 
     getNewsBySlug(slug)
-      .then((data) => {
-        setNews(data)
-      })
+      .then(setNews)
       .catch(console.error)
-      .finally(() => {
-        setLoading(false)
-      })
+      .finally(() => setLoading(false))
   }, [slug])
 
   if (loading) {
@@ -67,7 +66,7 @@ export default function NewsDetailPage() {
 
   const description =
     news.subtitle ||
-    `Últimas noticias de fútbol en Futbol Analítico.`
+    'Últimas noticias de fútbol en Futbol Analítico.'
 
   const author =
     news.authorId &&
@@ -81,7 +80,8 @@ export default function NewsDetailPage() {
     .map((word) => word[0])
     .join('')
     .toUpperCase()
-    return (
+
+  return (
     <>
       <Helmet>
         <title>
@@ -98,23 +98,14 @@ export default function NewsDetailPage() {
           content={news.title}
         />
 
-      {author && (
-        <meta
-          name="author"
-          content={author.name}
-        />
-      )}
-
-      {news.createdAt && (
-        <meta
-          property="article:published_time"
-          content={news.createdAt}
-        />
-      )}
-
         <meta
           property="og:description"
           content={description}
+        />
+
+        <meta
+          property="og:type"
+          content="article"
         />
 
         {news.image && (
@@ -124,10 +115,19 @@ export default function NewsDetailPage() {
           />
         )}
 
-        <meta
-          property="og:type"
-          content="article"
-        />
+        {author && (
+          <meta
+            name="author"
+            content={author.name}
+          />
+        )}
+
+        {news.createdAt && (
+          <meta
+            property="article:published_time"
+            content={news.createdAt}
+          />
+        )}
 
         <link
           rel="canonical"
@@ -135,208 +135,220 @@ export default function NewsDetailPage() {
         />
       </Helmet>
 
-      <article className="news-detail">
-        <button
-          type="button"
-          className="news-detail__back"
-          onClick={() => navigate(-1)}
-        >
-          ← Volver
-        </button>
+      <main className="news-detail-page">
+        <div className="news-detail-shell">
+          <button
+            type="button"
+            className="news-detail__back"
+            onClick={() => navigate(-1)}
+          >
+            ← Volver
+          </button>
 
-        {news.image && (
-          <div className="news-detail__hero-wrap">
-            <img
-              className="news-detail__hero"
-              src={news.image}
-              alt={news.title}
-            />
+          <article className="news-detail">
+            <header className="news-detail__header">
+              <div className="news-detail__meta">
+                {news.category && (
+                  <span className="news-detail__category">
+                    {news.category}
+                  </span>
+                )}
 
-            <div className="news-detail__hero-overlay" />
-          </div>
-        )}
+                {news.competition && (
+                  <span className="news-detail__competition">
+                    {news.competition}
+                  </span>
+                )}
+              </div>
 
-        <header className="news-detail__header">
-          <div className="news-detail__meta">
-            {news.category && (
-              <span className="news-detail__category">
-                {news.category}
-              </span>
+              <h1 className="news-detail__title">
+                {news.title}
+              </h1>
+
+              {news.subtitle && (
+                <p className="news-detail__subtitle">
+                  {news.subtitle}
+                </p>
+              )}
+
+              <div className="news-detail__byline">
+                {author ? (
+                  <aside className="news-detail__author">
+                    {author.image ? (
+                      <img
+                        className="news-detail__author-image"
+                        src={author.image}
+                        alt={author.name}
+                      />
+                    ) : (
+                      <div className="news-detail__author-fallback">
+                        {authorInitials}
+                      </div>
+                    )}
+
+                    <div className="news-detail__author-info">
+                      <span className="news-detail__author-label">
+                        Escrito por
+                      </span>
+
+                      <strong className="news-detail__author-name">
+                        {author.name}
+                      </strong>
+
+                      {author.role && (
+                        <span className="news-detail__author-role">
+                          {author.role}
+                        </span>
+                      )}
+
+                      {author.bio && (
+                        <p className="news-detail__author-bio">
+                          {author.bio}
+                        </p>
+                      )}
+
+                      {(author.twitter ||
+                        author.instagram) && (
+                        <div className="news-detail__author-socials">
+                          {author.twitter && (
+                            <a
+                              href={author.twitter}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              X / Twitter
+                            </a>
+                          )}
+
+                          {author.instagram && (
+                            <a
+                              href={author.instagram}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Instagram
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </aside>
+                ) : (
+                  <span />
+                )}
+
+                {publishedDate && (
+                  <div className="news-detail__date">
+                    <span>Publicado</span>
+                    <strong>{publishedDate}</strong>
+
+                    {publishedTime && (
+                      <small>
+                        {publishedTime} hs
+                      </small>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {news.teams && news.teams.length > 0 && (
+                <div className="news-detail__teams">
+                  {news.teams.map((team) => (
+                    <span key={team}>
+                      {team}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </header>
+
+            {news.image && (
+              <div className="news-detail__hero-wrap">
+                <img
+                  className="news-detail__hero"
+                  src={news.image}
+                  alt={news.title}
+                />
+              </div>
             )}
 
-            {news.competition && (
-              <span className="news-detail__competition">
-                {news.competition}
-              </span>
-            )}
-          </div>
+            <div className="news-detail__content">
+              {news.sections.length === 0 ? (
+                <p className="news-detail__text">
+                  Esta noticia todavía no tiene contenido.
+                </p>
+              ) : (
+                news.sections.map((section, index) => {
+                  switch (section.type) {
+                    case 'text':
+                      return (
+                        <p
+                          key={index}
+                          className="news-detail__text"
+                        >
+                          {section.content}
+                        </p>
+                      )
 
-          <h1 className="news-detail__title">
-            {news.title}
-          </h1>
+                    case 'image-right':
+                      return (
+                        <section
+                          key={index}
+                          className="news-detail__section"
+                        >
+                          <p>{section.content}</p>
 
-          {news.subtitle && (
-            <p className="news-detail__subtitle">
-              {news.subtitle}
-            </p>
-          )}
+                          <img
+                            src={section.image}
+                            alt=""
+                          />
+                        </section>
+                      )
 
-          {publishedDate && publishedTime && (
-            <p className="news-detail__date">
-              Publicado el {publishedDate} · {publishedTime} hs
-            </p>
-          )}
-        {author && (
-  <aside className="news-detail__author">
-    {author.image ? (
-      <img
-        className="news-detail__author-image"
-        src={author.image}
-        alt={author.name}
-      />
-    ) : (
-      <div className="news-detail__author-fallback">
-        {authorInitials}
-      </div>
-    )}
+                    case 'image-left':
+                      return (
+                        <section
+                          key={index}
+                          className="news-detail__section news-detail__section--reverse"
+                        >
+                          <img
+                            src={section.image}
+                            alt=""
+                          />
 
-    <div className="news-detail__author-info">
-      <span className="news-detail__author-label">
-        Escrito por
-      </span>
+                          <p>{section.content}</p>
+                        </section>
+                      )
 
-      <strong className="news-detail__author-name">
-        {author.name}
-      </strong>
+                    case 'image-full':
+                      return (
+                        <img
+                          key={index}
+                          className="news-detail__image-full"
+                          src={section.image}
+                          alt=""
+                        />
+                      )
 
-      {author.role && (
-        <span className="news-detail__author-role">
-          {author.role}
-        </span>
-      )}
-
-      {author.bio && (
-        <p className="news-detail__author-bio">
-          {author.bio}
-        </p>
-      )}
-
-      {(author.twitter || author.instagram) && (
-        <div className="news-detail__author-socials">
-          {author.twitter && (
-            <a
-              href={author.twitter}
-              target="_blank"
-              rel="noreferrer"
-            >
-              X / Twitter
-            </a>
-          )}
-
-          {author.instagram && (
-            <a
-              href={author.instagram}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Instagram
-            </a>
-          )}
-        </div>
-      )}
-    </div>
-  </aside>
-)}
-          {news.teams && news.teams.length > 0 && (
-              <div>
-                {news.teams.map((team) => (
-                <span key={team}>
-                  {team}
-                </span>
-              ))}
+                    default:
+                      return null
+                  }
+                })
+              )}
             </div>
-          )}
-        </header>
 
-        <div className="news-detail__content">
-          {(news.sections || []).length === 0 ? (
-            <p className="news-detail__text">
-              Esta noticia todavía no tiene contenido cargado.
-            </p>
-          ) : (
-            news.sections.map((section, index) => {
-              switch (section.type) {
-                case 'text':
-                  return (
-                    <p
-                      key={index}
-                      className="news-detail__text"
-                    >
-                      {section.content}
-                    </p>
-                  )
-
-                case 'image-right':
-                  return (
-                    <section
-                      key={index}
-                      className="news-detail__section"
-                    >
-                      <p>{section.content}</p>
-
-                      {section.image && (
-                        <img
-                          src={section.image}
-                          alt=""
-                        />
-                      )}
-                    </section>
-                  )
-
-                case 'image-left':
-                  return (
-                    <section
-                      key={index}
-                      className="news-detail__section news-detail__section--reverse"
-                    >
-                      {section.image && (
-                        <img
-                          src={section.image}
-                          alt=""
-                        />
-                      )}
-
-                      <p>{section.content}</p>
-                    </section>
-                  )
-
-                case 'image-full':
-                  return section.image ? (
-                    <img
-                      key={index}
-                      className="news-detail__image-full"
-                      src={section.image}
-                      alt=""
-                    />
-                  ) : null
-
-                default:
-                  return null
-              }
-            })
-          )}
+            {news.hashtags?.length > 0 && (
+              <div className="news-detail__hashtags">
+                {news.hashtags.map((tag) => (
+                  <span key={tag}>
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </article>
         </div>
-
-        {news.hashtags?.length > 0 && (
-          <div className="news-detail__hashtags">
-            {news.hashtags.map((tag: string) => (
-              <span key={tag}>
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-      </article>
+      </main>
     </>
   )
 }
