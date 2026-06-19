@@ -9,6 +9,7 @@ import type {
   Writer,
   WriterPayload
 } from '../../../services/writerService'
+import { uploadImage } from '../../../services/uploadService'
 import { slugify } from '../../../shared/utils/slugify'
 import './AdminForm.css'
 
@@ -26,14 +27,19 @@ export default function AdminWritersPage() {
   const [writers, setWriters] = useState<Writer[]>([])
   const [form, setForm] =
     useState<WriterPayload>(emptyForm)
+
   const [editingId, setEditingId] =
     useState<string | null>(null)
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingImage, setUploadingImage] =
+    useState(false)
 
   async function loadWriters() {
     try {
       setLoading(true)
+
       const data = await getWriters()
       setWriters(data)
     } catch (error) {
@@ -61,8 +67,67 @@ export default function AdminWritersPage() {
     }))
   }
 
+  async function handleImageUpload(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = event.target.files?.[0]
+
+    if (!file) return
+
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/webp'
+    ]
+
+    if (!allowedTypes.includes(file.type)) {
+      alert('La imagen debe ser JPG, PNG o WEBP')
+      event.target.value = ''
+      return
+    }
+
+    const maxSize = 5 * 1024 * 1024
+
+    if (file.size > maxSize) {
+      alert('La imagen no puede superar los 5 MB')
+      event.target.value = ''
+      return
+    }
+
+    try {
+      setUploadingImage(true)
+
+      const result = await uploadImage(file)
+
+      const imageUrl =
+        result.url || result.secure_url
+
+      if (!imageUrl) {
+        throw new Error(
+          'El servidor no devolvió la URL de la imagen'
+        )
+      }
+
+      setForm((current) => ({
+        ...current,
+        image: imageUrl
+      }))
+    } catch (error) {
+      console.error(error)
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'Error subiendo la imagen'
+      )
+    } finally {
+      setUploadingImage(false)
+      event.target.value = ''
+    }
+  }
+
   function resetForm() {
-    setForm(emptyForm)
+    setForm({ ...emptyForm })
     setEditingId(null)
   }
 
@@ -95,7 +160,17 @@ export default function AdminWritersPage() {
       return
     }
 
-    const payload = {
+    if (!form.image) {
+      alert('Seleccioná una foto de perfil')
+      return
+    }
+
+    if (uploadingImage) {
+      alert('Esperá a que termine de subir la imagen')
+      return
+    }
+
+    const payload: WriterPayload = {
       ...form,
       name: form.name.trim(),
       slug: editingId
@@ -189,27 +264,45 @@ export default function AdminWritersPage() {
         </label>
 
         <label>
-          URL de la foto
+          Foto de perfil
           <input
-            name="image"
-            type="url"
-            value={form.image}
-            onChange={handleChange}
-            placeholder="https://..."
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleImageUpload}
+            disabled={uploadingImage}
           />
         </label>
 
+        {uploadingImage && (
+          <p>Subiendo imagen...</p>
+        )}
+
         {form.image && (
-          <img
-            src={form.image}
-            alt="Vista previa del escritor"
-            style={{
-              width: 100,
-              height: 100,
-              borderRadius: '50%',
-              objectFit: 'cover'
-            }}
-          />
+          <div>
+            <img
+              src={form.image}
+              alt="Vista previa del escritor"
+              style={{
+                width: 110,
+                height: 110,
+                borderRadius: '50%',
+                objectFit: 'cover'
+              }}
+            />
+
+            <button
+              type="button"
+              onClick={() =>
+                setForm((current) => ({
+                  ...current,
+                  image: ''
+                }))
+              }
+              disabled={uploadingImage}
+            >
+              Quitar foto
+            </button>
+          </div>
         )}
 
         <label>
@@ -243,7 +336,10 @@ export default function AdminWritersPage() {
           />
         </label>
 
-        <button type="submit" disabled={saving}>
+        <button
+          type="submit"
+          disabled={saving || uploadingImage}
+        >
           {saving
             ? 'Guardando...'
             : editingId
@@ -255,6 +351,7 @@ export default function AdminWritersPage() {
           <button
             type="button"
             onClick={resetForm}
+            disabled={saving || uploadingImage}
           >
             Cancelar edición
           </button>
@@ -290,7 +387,9 @@ export default function AdminWritersPage() {
               <strong>{writer.name}</strong>
               <p>{writer.role}</p>
 
-              {writer.bio && <p>{writer.bio}</p>}
+              {writer.bio && (
+                <p>{writer.bio}</p>
+              )}
 
               <button
                 type="button"
