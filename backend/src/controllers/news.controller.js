@@ -7,9 +7,13 @@ exports.getNews = async (req, res) => {
   .populate('authorId')
   .sort({ createdAt: -1 })
     res.json(news)
-  } catch (error) {
-    res.status(500).json(error)
-  }
+} catch (error) {
+  console.error('Error obteniendo noticias:', error)
+
+  res.status(500).json({
+    message: error.message
+  })
+}
 }
 
 exports.getNewsBySlug = async (req, res) => {
