@@ -1,3 +1,14 @@
+export type Writer = {
+  _id: string
+  name: string
+  slug: string
+  image?: string
+  role?: string
+  bio?: string
+  twitter?: string
+  instagram?: string
+}
+
 export type NewsSection =
   | {
       type: 'text'
@@ -23,28 +34,19 @@ export type NewsSection =
 
 export type News = {
   _id?: string
-
   id?: string
-
   slug: string
-
   title: string
   subtitle: string
-
   category: string
-
   categoryId?: string
-
   image: string
-
   featuredMediaId?: string
-
   mediaIds?: string[]
-
   sections: NewsSection[]
   competition?: string
   teams?: string[]
   hashtags: string[]
-
-    createdAt?: string
+  authorId?: string | Writer | null
+  createdAt?: string
 }
