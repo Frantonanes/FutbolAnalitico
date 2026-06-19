@@ -62,11 +62,8 @@ export default function AdminLayout() {
     </Link>
 
     <Link to="/admin/media">
-      Biblioteca multimedia
-    </Link>
-      <Link to="/admin/media">
     Biblioteca multimedia
-  </Link>
+    </Link>
 
   <hr />
 
