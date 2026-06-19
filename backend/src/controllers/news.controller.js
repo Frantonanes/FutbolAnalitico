@@ -1,4 +1,5 @@
 const News = require('../models/News')
+require('../models/Writer')
 
 exports.getNews = async (req, res) => {
   try {
