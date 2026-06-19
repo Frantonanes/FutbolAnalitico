@@ -17,7 +17,11 @@ const NewsSchema = new mongoose.Schema(
     competition: String,
 
     teams: [String],
-    // NUEVO
+    authorId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Writer',
+  default: null
+},
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Category'
