@@ -69,7 +69,19 @@ export default function NewsDetailPage() {
     news.subtitle ||
     `Últimas noticias de fútbol en Futbol Analítico.`
 
-  return (
+  const author =
+    news.authorId &&
+    typeof news.authorId === 'object'
+      ? news.authorId
+      : null
+
+  const authorInitials = author?.name
+    .split(' ')
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase()
+    return (
     <>
       <Helmet>
         <title>
@@ -85,6 +97,20 @@ export default function NewsDetailPage() {
           property="og:title"
           content={news.title}
         />
+
+      {author && (
+        <meta
+          name="author"
+          content={author.name}
+        />
+      )}
+
+      {news.createdAt && (
+        <meta
+          property="article:published_time"
+          content={news.createdAt}
+        />
+      )}
 
         <meta
           property="og:description"
@@ -160,7 +186,67 @@ export default function NewsDetailPage() {
               Publicado el {publishedDate} · {publishedTime} hs
             </p>
           )}
+        {author && (
+  <aside className="news-detail__author">
+    {author.image ? (
+      <img
+        className="news-detail__author-image"
+        src={author.image}
+        alt={author.name}
+      />
+    ) : (
+      <div className="news-detail__author-fallback">
+        {authorInitials}
+      </div>
+    )}
 
+    <div className="news-detail__author-info">
+      <span className="news-detail__author-label">
+        Escrito por
+      </span>
+
+      <strong className="news-detail__author-name">
+        {author.name}
+      </strong>
+
+      {author.role && (
+        <span className="news-detail__author-role">
+          {author.role}
+        </span>
+      )}
+
+      {author.bio && (
+        <p className="news-detail__author-bio">
+          {author.bio}
+        </p>
+      )}
+
+      {(author.twitter || author.instagram) && (
+        <div className="news-detail__author-socials">
+          {author.twitter && (
+            <a
+              href={author.twitter}
+              target="_blank"
+              rel="noreferrer"
+            >
+              X / Twitter
+            </a>
+          )}
+
+          {author.instagram && (
+            <a
+              href={author.instagram}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Instagram
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  </aside>
+)}
           {news.teams && news.teams.length > 0 && (
               <div>
                 {news.teams.map((team) => (
