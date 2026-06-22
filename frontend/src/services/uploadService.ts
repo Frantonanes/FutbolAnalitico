@@ -1,4 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL
+import { getAuthHeaders } from './authService'
 
 export async function uploadImage(file: File) {
   const formData = new FormData()
@@ -9,6 +10,7 @@ export async function uploadImage(file: File) {
     `${API_URL}/upload`,
     {
       method: 'POST',
+      headers: getAuthHeaders(),
       body: formData
     }
   )

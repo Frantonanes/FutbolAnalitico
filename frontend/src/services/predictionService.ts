@@ -1,4 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL
+import { getAuthHeaders } from './authService'
 
 export async function createPrediction(
   prediction: any
@@ -8,7 +9,8 @@ export async function createPrediction(
     {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify(prediction)
     }
@@ -32,7 +34,8 @@ export async function updatePrediction(
     {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify(prediction)
     }
@@ -53,7 +56,8 @@ export async function deletePrediction(
   const response = await fetch(
     `${API_URL}/predictions/${id}`,
     {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getAuthHeaders()
     }
   )
 

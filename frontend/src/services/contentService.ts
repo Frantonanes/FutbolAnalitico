@@ -1,4 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL
+import { getAuthHeaders } from './authService'
 
 /* ==========================
    CATEGORIES
@@ -26,7 +27,8 @@ export async function createCategory(
     {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify(category)
     }
@@ -45,7 +47,8 @@ export async function deleteCategory(
   const response = await fetch(
     `${API_URL}/content/categories/${id}`,
     {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getAuthHeaders()
     }
   )
 
@@ -82,7 +85,8 @@ export async function createHashtag(
     {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify(hashtag)
     }
@@ -101,7 +105,8 @@ export async function deleteHashtag(
   const response = await fetch(
     `${API_URL}/content/hashtags/${id}`,
     {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getAuthHeaders()
     }
   )
 
@@ -138,7 +143,8 @@ export async function createMedia(
     {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify(media)
     }
@@ -175,7 +181,8 @@ export async function deleteMedia(
   const response = await fetch(
     `${API_URL}/content/media/${id}`,
     {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getAuthHeaders()
     }
   )
 
@@ -212,7 +219,8 @@ export async function createCompetition(
     {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify(competition)
     }
@@ -233,7 +241,8 @@ export async function deleteCompetition(
   const response = await fetch(
     `${API_URL}/content/competitions/${id}`,
     {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getAuthHeaders()
     }
   )
 
@@ -286,7 +295,8 @@ export async function createTeam(
     {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify(team)
     }
@@ -305,7 +315,8 @@ export async function deleteTeam(
   const response = await fetch(
     `${API_URL}/content/teams/${id}`,
     {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getAuthHeaders()
     }
   )
 

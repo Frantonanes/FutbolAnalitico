@@ -1,4 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL
+import { getAuthHeaders } from './authService'
 
 export type Writer = {
   _id: string
@@ -36,7 +37,8 @@ export async function createWriter(
   const response = await fetch(`${API_URL}/writers`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
     },
     body: JSON.stringify(writer)
   })
@@ -53,7 +55,8 @@ export async function updateWriter(
     {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify(writer)
     }
@@ -66,7 +69,8 @@ export async function deleteWriter(id: string) {
   const response = await fetch(
     `${API_URL}/writers/${id}`,
     {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getAuthHeaders()
     }
   )
 

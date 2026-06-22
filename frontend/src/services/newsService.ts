@@ -1,4 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL
+import { getAuthHeaders } from './authService'
 
 export async function getNews() {
   const response = await fetch(
@@ -34,7 +35,8 @@ export async function createNews(
     {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify(news)
     }
@@ -56,7 +58,8 @@ export async function updateNews(
     {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify(news)
     }
@@ -87,7 +90,8 @@ export async function deleteNews(
   const response = await fetch(
     `${API_URL}/news/${id}`,
     {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getAuthHeaders()
     }
   )
 

@@ -1,4 +1,5 @@
 const express = require('express')
+const requireAuth = require('../middleware/auth.middleware')
 
 const router = express.Router()
 
@@ -17,10 +18,12 @@ router.get('/id/:id', getPredictionById)
 
 router.get('/:slug', getPredictionBySlug)
 
-router.post('/', createPrediction)
+router.post('/', requireAuth, createPrediction)
 
-router.put('/:id', updatePrediction)
+router.put('/:id', requireAuth, updatePrediction)
 
-router.delete('/:id', deletePrediction)
+router.patch('/:id', requireAuth, updatePrediction)
+
+router.delete('/:id', requireAuth, deletePrediction)
 
 module.exports = router

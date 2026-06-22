@@ -3,6 +3,7 @@ const multer = require('multer')
 const { CloudinaryStorage } = require('multer-storage-cloudinary')
 
 const cloudinary = require('../config/cloudinary')
+const requireAuth = require('../middleware/auth.middleware')
 
 const router = express.Router()
 
@@ -18,6 +19,7 @@ const upload = multer({ storage })
 
 router.post(
   '/',
+  requireAuth,
   upload.single('image'),
   (req, res) => {
     res.json({
