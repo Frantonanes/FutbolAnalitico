@@ -15,25 +15,34 @@ export default function PredictionsPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    loadPredictions()
-  }, [])
+    const controller = new AbortController()
 
-  async function loadPredictions() {
-    try {
-      setLoading(true)
+    async function loadPredictions() {
+      try {
+        const data = await getPredictions(
+          controller.signal
+        )
 
-      const data = await getPredictions()
+        if (controller.signal.aborted) return
 
-      setPredictions(data)
-    } catch (error) {
-      console.error(error)
-      setError(
-        'No se pudieron cargar las predicciones.'
-      )
-    } finally {
-      setLoading(false)
+        setPredictions(data)
+      } catch (error) {
+        if (controller.signal.aborted) return
+        console.error(error)
+        setError(
+          'No se pudieron cargar las predicciones.'
+        )
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
+      }
     }
-  }
+
+    loadPredictions()
+
+    return () => controller.abort()
+  }, [])
 
   if (loading) {
     return (

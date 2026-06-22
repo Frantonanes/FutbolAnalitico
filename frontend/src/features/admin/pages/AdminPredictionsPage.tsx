@@ -20,7 +20,26 @@ export default function AdminPredictionsPage() {
     useState(true)
 
   useEffect(() => {
-    loadPredictions()
+    const controller = new AbortController()
+
+    getPredictions(controller.signal)
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setPredictions(data)
+        }
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return
+        console.error(error)
+        alert('Error cargando predicciones')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
+      })
+
+    return () => controller.abort()
   }, [])
 
   async function loadPredictions() {

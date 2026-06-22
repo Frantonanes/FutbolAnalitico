@@ -1,13 +1,37 @@
 const API_URL = import.meta.env.VITE_API_URL
 import { getAuthHeaders } from './authService'
 
+type NamedSlugPayload = {
+  name: string
+  slug: string
+}
+
+type MediaPayload = {
+  name: string
+  url: string
+  public_id?: string
+  hashtags: string[]
+}
+
+type CompetitionPayload = NamedSlugPayload & {
+  logo: string
+}
+
+type TeamPayload = NamedSlugPayload & {
+  logo: string
+  competitionId: string
+}
+
 /* ==========================
    CATEGORIES
 ========================== */
 
-export async function getCategories() {
+export async function getCategories(
+  signal?: AbortSignal
+) {
   const response = await fetch(
-    `${API_URL}/content/categories`
+    `${API_URL}/content/categories`,
+    { signal }
   )
 
   if (!response.ok) {
@@ -20,7 +44,7 @@ export async function getCategories() {
 }
 
 export async function createCategory(
-  category: any
+  category: NamedSlugPayload
 ) {
   const response = await fetch(
     `${API_URL}/content/categories`,
@@ -63,9 +87,12 @@ export async function deleteCategory(
    HASHTAGS
 ========================== */
 
-export async function getHashtags() {
+export async function getHashtags(
+  signal?: AbortSignal
+) {
   const response = await fetch(
-    `${API_URL}/content/hashtags`
+    `${API_URL}/content/hashtags`,
+    { signal }
   )
 
   if (!response.ok) {
@@ -78,7 +105,7 @@ export async function getHashtags() {
 }
 
 export async function createHashtag(
-  hashtag: any
+  hashtag: NamedSlugPayload
 ) {
   const response = await fetch(
     `${API_URL}/content/hashtags`,
@@ -121,9 +148,12 @@ export async function deleteHashtag(
    MEDIA
 ========================== */
 
-export async function getMedia() {
+export async function getMedia(
+  signal?: AbortSignal
+) {
   const response = await fetch(
-    `${API_URL}/content/media`
+    `${API_URL}/content/media`,
+    { signal }
   )
 
   if (!response.ok) {
@@ -136,7 +166,7 @@ export async function getMedia() {
 }
 
 export async function createMedia(
-  media: any
+  media: MediaPayload
 ) {
   const response = await fetch(
     `${API_URL}/content/media`,
@@ -197,9 +227,12 @@ export async function deleteMedia(
    COMPETITIONS
 ========================== */
 
-export async function getCompetitions() {
+export async function getCompetitions(
+  signal?: AbortSignal
+) {
   const response = await fetch(
-    `${API_URL}/content/competitions`
+    `${API_URL}/content/competitions`,
+    { signal }
   )
 
   if (!response.ok) {
@@ -212,7 +245,7 @@ export async function getCompetitions() {
 }
 
 export async function createCompetition(
-  competition: any
+  competition: CompetitionPayload
 ) {
   const response = await fetch(
     `${API_URL}/content/competitions`,
@@ -257,9 +290,12 @@ export async function deleteCompetition(
    TEAMS
 ========================== */
 
-export async function getTeams() {
+export async function getTeams(
+  signal?: AbortSignal
+) {
   const response = await fetch(
-    `${API_URL}/content/teams`
+    `${API_URL}/content/teams`,
+    { signal }
   )
 
   if (!response.ok) {
@@ -272,10 +308,12 @@ export async function getTeams() {
 }
 
 export async function getTeamsByCompetition(
-  competitionId: string
+  competitionId: string,
+  signal?: AbortSignal
 ) {
   const response = await fetch(
-    `${API_URL}/content/teams/competition/${competitionId}`
+    `${API_URL}/content/teams/competition/${competitionId}`,
+    { signal }
   )
 
   if (!response.ok) {
@@ -288,7 +326,7 @@ export async function getTeamsByCompetition(
 }
 
 export async function createTeam(
-  team: any
+  team: TeamPayload
 ) {
   const response = await fetch(
     `${API_URL}/content/teams`,

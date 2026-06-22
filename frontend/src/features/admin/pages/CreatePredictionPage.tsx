@@ -72,23 +72,27 @@ const filteredAwayTeams = teams.filter((team) =>
 )
 
   useEffect(() => {
-    loadCompetitions()
+    const controller = new AbortController()
+
+    getCompetitions(controller.signal)
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setCompetitions(data)
+        }
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return
+        console.error(error)
+        alert('Error cargando competiciones')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
+      })
+
+    return () => controller.abort()
   }, [])
-
-  async function loadCompetitions() {
-    try {
-      setLoading(true)
-
-      const data = await getCompetitions()
-
-      setCompetitions(data)
-    } catch (error) {
-      console.error(error)
-      alert('Error cargando competiciones')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   async function handleCompetitionChange(id: string) {
     setCompetitionId(id)

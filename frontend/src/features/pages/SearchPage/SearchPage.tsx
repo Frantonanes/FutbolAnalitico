@@ -21,14 +21,29 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    const controller = new AbortController()
+
     async function loadResults() {
+      if (!query.trim()) {
+        await Promise.resolve()
+
+        if (controller.signal.aborted) return
+
+        setNews([])
+        setPredictions([])
+        setLoading(false)
+        return
+      }
+
       try {
         setLoading(true)
 
         const [newsData, predictionsData] = await Promise.all([
-          getNews(),
-          getPredictions()
+          getNews(controller.signal),
+          getPredictions(controller.signal)
         ])
+
+        if (controller.signal.aborted) return
 
         const search = query.toLowerCase().trim()
 
@@ -48,18 +63,18 @@ export default function SearchPage() {
           )
         )
       } catch (error) {
+        if (controller.signal.aborted) return
         console.error(error)
       } finally {
-        setLoading(false)
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
       }
     }
 
-    if (query.trim()) {
-      loadResults()
-    } else {
-      setNews([])
-      setPredictions([])
-    }
+    loadResults()
+
+    return () => controller.abort()
   }, [query])
 
   const hasResults = news.length > 0 || predictions.length > 0

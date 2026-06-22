@@ -1,9 +1,18 @@
 const API_URL = import.meta.env.VITE_API_URL
 import { getAuthHeaders } from './authService'
+import type { News } from '../shared/types/News'
 
-export async function getNews() {
+type NewsPayload = Omit<
+  News,
+  '_id' | 'id' | 'createdAt'
+>
+
+export async function getNews(
+  signal?: AbortSignal
+) {
   const response = await fetch(
-    `${API_URL}/news`
+    `${API_URL}/news`,
+    { signal }
   )
 
   if (!response.ok) {
@@ -14,10 +23,12 @@ export async function getNews() {
 }
 
 export async function getNewsBySlug(
-  slug: string
+  slug: string,
+  signal?: AbortSignal
 ) {
   const response = await fetch(
-    `${API_URL}/news/${slug}`
+    `${API_URL}/news/${slug}`,
+    { signal }
   )
 
   if (!response.ok) {
@@ -28,7 +39,7 @@ export async function getNewsBySlug(
 }
 
 export async function createNews(
-  news: any
+  news: NewsPayload
 ) {
   const response = await fetch(
     `${API_URL}/news`,
@@ -51,7 +62,7 @@ export async function createNews(
 
 export async function updateNews(
   id: string,
-  news: any
+  news: NewsPayload
 ) {
   const response = await fetch(
     `${API_URL}/news/${id}`,
@@ -72,9 +83,13 @@ export async function updateNews(
   return response.json()
 }
 
-export async function getNewsById(id: string) {
+export async function getNewsById(
+  id: string,
+  signal?: AbortSignal
+) {
   const response = await fetch(
-    `${API_URL}/news/id/${id}`
+    `${API_URL}/news/id/${id}`,
+    { signal }
   )
 
   if (!response.ok) {

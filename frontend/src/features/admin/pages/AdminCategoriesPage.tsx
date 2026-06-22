@@ -33,7 +33,26 @@ export default function AdminCategoriesPage() {
 }
 
   useEffect(() => {
-    loadCategories()
+    const controller = new AbortController()
+
+    getCategories(controller.signal)
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setCategories(data)
+        }
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return
+        console.error(error)
+        alert('Error cargando categorías')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
+      })
+
+    return () => controller.abort()
   }, [])
 
   async function handleSubmit(

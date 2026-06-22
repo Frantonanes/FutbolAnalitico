@@ -1,8 +1,14 @@
 const API_URL = import.meta.env.VITE_API_URL
 import { getAuthHeaders } from './authService'
+import type { Prediction } from '../shared/types/Prediction'
+
+type PredictionPayload = Omit<
+  Prediction,
+  '_id' | 'id' | 'createdAt'
+>
 
 export async function createPrediction(
-  prediction: any
+  prediction: PredictionPayload
 ) {
   const response = await fetch(
     `${API_URL}/predictions`,
@@ -27,7 +33,7 @@ export async function createPrediction(
 
 export async function updatePrediction(
   id: string,
-  prediction: any
+  prediction: PredictionPayload
 ) {
   const response = await fetch(
     `${API_URL}/predictions/${id}`,
@@ -69,10 +75,12 @@ export async function deletePrediction(
 }
 
 export async function getPredictionBySlug(
-  slug: string
+  slug: string,
+  signal?: AbortSignal
 ) {
   const response = await fetch(
-    `${API_URL}/predictions/${slug}`
+    `${API_URL}/predictions/${slug}`,
+    { signal }
   )
 
   if (!response.ok) {
@@ -83,9 +91,13 @@ export async function getPredictionBySlug(
 
   return response.json()
 }
-export async function getPredictionById(id: string) {
+export async function getPredictionById(
+  id: string,
+  signal?: AbortSignal
+) {
   const response = await fetch(
-    `${API_URL}/predictions/id/${id}`
+    `${API_URL}/predictions/id/${id}`,
+    { signal }
   )
 
   if (!response.ok) {
@@ -94,9 +106,12 @@ export async function getPredictionById(id: string) {
 
   return response.json()
 }
-export async function getPredictions() {
+export async function getPredictions(
+  signal?: AbortSignal
+) {
   const response = await fetch(
-    `${API_URL}/predictions`
+    `${API_URL}/predictions`,
+    { signal }
   )
 
   if (!response.ok) {

@@ -75,86 +75,101 @@ export default function EditPredictionPage() {
   )
 
   useEffect(() => {
-    loadPageData()
-  }, [])
-
-  async function loadPageData() {
     if (!id) return
+    const predictionId = id
+    const controller = new AbortController()
 
-    try {
-      setLoading(true)
+    async function loadPageData() {
+      try {
+        setLoading(true)
 
-      const [prediction, competitionsData] =
-        await Promise.all([
-          getPredictionById(id),
-          getCompetitions()
-        ])
+        const [prediction, competitionsData] =
+          await Promise.all([
+            getPredictionById(
+              predictionId,
+              controller.signal
+            ),
+            getCompetitions(controller.signal)
+          ])
 
-      setCompetitions(competitionsData)
+        if (controller.signal.aborted) return
 
-      const currentCompetitionId =
-        prediction.competitionId ||
-        competitionsData.find(
-          (competition: Competition) =>
-            competition.name ===
-            prediction.competition
-        )?._id ||
-        ''
+        setCompetitions(competitionsData)
 
-      setCompetitionId(currentCompetitionId)
-      setDate(prediction.date || '')
+        const currentCompetitionId =
+          prediction.competitionId ||
+          competitionsData.find(
+            (competition: Competition) =>
+              competition.name ===
+              prediction.competition
+          )?._id ||
+          ''
 
-      setStatus(prediction.status || 'pending')
-      setFinalScore(prediction.finalScore || '')
+        setCompetitionId(currentCompetitionId)
+        setDate(prediction.date || '')
 
-      setHomeTeamId(prediction.homeTeamId || '')
-      setAwayTeamId(prediction.awayTeamId || '')
+        setStatus(prediction.status || 'pending')
+        setFinalScore(prediction.finalScore || '')
 
-      setHomeProbability(
-        prediction.homeProbability ?? 50
-      )
-      setDrawProbability(
-        prediction.drawProbability ?? 25
-      )
-      setAwayProbability(
-        prediction.awayProbability ?? 25
-      )
+        setHomeTeamId(prediction.homeTeamId || '')
+        setAwayTeamId(prediction.awayTeamId || '')
 
-      setBlocks(prediction.blocks || [])
+        setHomeProbability(
+          prediction.homeProbability ?? 50
+        )
+        setDrawProbability(
+          prediction.drawProbability ?? 25
+        )
+        setAwayProbability(
+          prediction.awayProbability ?? 25
+        )
 
-      if (currentCompetitionId) {
-        const teamsData =
-          await getTeamsByCompetition(
-            currentCompetitionId
-          )
+        setBlocks(prediction.blocks || [])
 
-        setTeams(teamsData)
+        if (currentCompetitionId) {
+          const teamsData =
+            await getTeamsByCompetition(
+              currentCompetitionId,
+              controller.signal
+            )
 
-        if (!prediction.homeTeamId) {
-          const home = teamsData.find(
-            (team: Team) =>
-              team.name === prediction.homeTeam
-          )
+          if (controller.signal.aborted) return
 
-          if (home) setHomeTeamId(home._id)
+          setTeams(teamsData)
+
+          if (!prediction.homeTeamId) {
+            const home = teamsData.find(
+              (team: Team) =>
+                team.name === prediction.homeTeam
+            )
+
+            if (home) setHomeTeamId(home._id)
+          }
+
+          if (!prediction.awayTeamId) {
+            const away = teamsData.find(
+              (team: Team) =>
+                team.name === prediction.awayTeam
+            )
+
+            if (away) setAwayTeamId(away._id)
+          }
         }
-
-        if (!prediction.awayTeamId) {
-          const away = teamsData.find(
-            (team: Team) =>
-              team.name === prediction.awayTeam
-          )
-
-          if (away) setAwayTeamId(away._id)
+      } catch (error) {
+        if (controller.signal.aborted) return
+        console.error(error)
+        alert('Error cargando predicción')
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false)
         }
       }
-    } catch (error) {
-      console.error(error)
-      alert('Error cargando predicción')
-    } finally {
-      setLoading(false)
     }
-  }
+
+    loadPageData()
+
+    return () => controller.abort()
+  }, [id])
 
   async function handleCompetitionChange(id: string) {
     setCompetitionId(id)

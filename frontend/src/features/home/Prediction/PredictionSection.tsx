@@ -14,22 +14,31 @@ export default function PredictionsSection() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadPredictions()
-  }, [])
+    const controller = new AbortController()
 
-  async function loadPredictions() {
-    try {
-      setLoading(true)
+    async function loadPredictions() {
+      try {
+        const data = await getPredictions(
+          controller.signal
+        )
 
-      const data = await getPredictions()
+        if (controller.signal.aborted) return
 
-      setPredictions(data.slice(0, 6))
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setLoading(false)
+        setPredictions(data.slice(0, 6))
+      } catch (error) {
+        if (controller.signal.aborted) return
+        console.error(error)
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
+      }
     }
-  }
+
+    loadPredictions()
+
+    return () => controller.abort()
+  }, [])
 
   if (loading) return null
 

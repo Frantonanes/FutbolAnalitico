@@ -13,38 +13,45 @@ export default function DashboardPage() {
     useState('')
 
   useEffect(() => {
-    loadDashboard()
-  }, [])
+    const controller = new AbortController()
 
-  async function loadDashboard() {
-    try {
-      const news = await getNews()
-      const predictions =
-        await getPredictions()
+    async function loadDashboard() {
+      try {
+        const news = await getNews(controller.signal)
+        const predictions =
+          await getPredictions(controller.signal)
 
-      setNewsCount(news.length)
-      setPredictionsCount(
-        predictions.length
-      )
+        if (controller.signal.aborted) return
 
-      if (news.length > 0) {
-        setLatestNews(
-          news[0].title
+        setNewsCount(news.length)
+        setPredictionsCount(
+          predictions.length
         )
-      }
 
-      if (predictions.length > 0) {
-        const last =
-          predictions[0]
+        if (news.length > 0) {
+          setLatestNews(
+            news[0].title
+          )
+        }
 
-        setLatestPrediction(
-          `${last.homeTeam} vs ${last.awayTeam}`
-        )
+        if (predictions.length > 0) {
+          const last =
+            predictions[0]
+
+          setLatestPrediction(
+            `${last.homeTeam} vs ${last.awayTeam}`
+          )
+        }
+      } catch (error) {
+        if (controller.signal.aborted) return
+        console.error(error)
       }
-    } catch (error) {
-      console.error(error)
     }
-  }
+
+    loadDashboard()
+
+    return () => controller.abort()
+  }, [])
 
   return (
     <div className="dashboard">

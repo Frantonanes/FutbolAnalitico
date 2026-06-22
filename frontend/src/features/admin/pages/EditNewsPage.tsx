@@ -96,58 +96,67 @@ export default function EditNewsPage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    loadPageData()
-  }, [])
-
-  async function loadPageData() {
     if (!id) return
+    const articleId = id
+    const controller = new AbortController()
 
-    try {
-      setLoading(true)
+    async function loadPageData() {
+      try {
+        setLoading(true)
 
-      const [
-        article,
-        categoriesData,
-        hashtagsData,
-        mediaData,
-        teamsData,
-        writersData
-      ] = await Promise.all([
-        getNewsById(id),
-        getCategories(),
-        getHashtags(),
-        getMedia(),
-        getTeams(),
-        getWriters()
-      ])
+        const [
+          article,
+          categoriesData,
+          hashtagsData,
+          mediaData,
+          teamsData,
+          writersData
+        ] = await Promise.all([
+          getNewsById(articleId, controller.signal),
+          getCategories(controller.signal),
+          getHashtags(controller.signal),
+          getMedia(controller.signal),
+          getTeams(controller.signal),
+          getWriters(controller.signal)
+        ])
 
-      setTitle(article.title || '')
-      setSubtitle(article.subtitle || '')
-      setCategory(article.category || '')
-      setCompetition(article.competition || '')
-      setImage(article.image || '')
-      setSelectedHashtags(article.hashtags || [])
-      setTeams(article.teams || [])
-      setSections(article.sections || [])
+        if (controller.signal.aborted) return
 
-      if (typeof article.authorId === 'string') {
-        setAuthorId(article.authorId)
-      } else {
-        setAuthorId(article.authorId?._id || '')
+        setTitle(article.title || '')
+        setSubtitle(article.subtitle || '')
+        setCategory(article.category || '')
+        setCompetition(article.competition || '')
+        setImage(article.image || '')
+        setSelectedHashtags(article.hashtags || [])
+        setTeams(article.teams || [])
+        setSections(article.sections || [])
+
+        if (typeof article.authorId === 'string') {
+          setAuthorId(article.authorId)
+        } else {
+          setAuthorId(article.authorId?._id || '')
+        }
+
+        setCategories(categoriesData)
+        setHashtagOptions(hashtagsData)
+        setMediaOptions(mediaData)
+        setTeamOptions(teamsData)
+        setWriterOptions(writersData)
+      } catch (error) {
+        if (controller.signal.aborted) return
+        console.error(error)
+        alert('Error cargando noticia')
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
       }
-
-      setCategories(categoriesData)
-      setHashtagOptions(hashtagsData)
-      setMediaOptions(mediaData)
-      setTeamOptions(teamsData)
-      setWriterOptions(writersData)
-    } catch (error) {
-      console.error(error)
-      alert('Error cargando noticia')
-    } finally {
-      setLoading(false)
     }
-  }
+
+    loadPageData()
+
+    return () => controller.abort()
+  }, [id])
 
   async function handleImageHashtagChange(
     hashtag: string

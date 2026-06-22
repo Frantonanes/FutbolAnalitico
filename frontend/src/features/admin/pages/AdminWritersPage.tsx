@@ -51,7 +51,26 @@ export default function AdminWritersPage() {
   }
 
   useEffect(() => {
-    loadWriters()
+    const controller = new AbortController()
+
+    getWriters(controller.signal)
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setWriters(data)
+        }
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return
+        console.error(error)
+        alert('Error cargando escritores')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
+      })
+
+    return () => controller.abort()
   }, [])
 
   function handleChange(

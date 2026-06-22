@@ -37,7 +37,7 @@ export default function HeaderTop() {
       setPassword('')
 
       navigate('/admin')
-    } catch (error) {
+    } catch {
       alert('Credenciales incorrectas')
     }
   }
@@ -91,6 +91,7 @@ export default function HeaderTop() {
             </div>
 
             <input
+              autoComplete="username"
               placeholder="Nombre"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -99,6 +100,7 @@ export default function HeaderTop() {
             {showPassword && (
               <input
                 type="password"
+                autoComplete="current-password"
                 placeholder="Contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

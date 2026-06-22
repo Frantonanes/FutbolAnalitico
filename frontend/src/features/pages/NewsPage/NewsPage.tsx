@@ -15,25 +15,32 @@ export default function NewsPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    loadNews()
-  }, [])
+    const controller = new AbortController()
 
-  async function loadNews() {
-    try {
-      setLoading(true)
+    async function loadNews() {
+      try {
+        const data = await getNews(controller.signal)
 
-      const data = await getNews()
+        if (controller.signal.aborted) return
 
-      setNews(data)
-    } catch (error) {
-      console.error(error)
-      setError(
-        'No se pudieron cargar las noticias.'
-      )
-    } finally {
-      setLoading(false)
+        setNews(data)
+      } catch (error) {
+        if (controller.signal.aborted) return
+        console.error(error)
+        setError(
+          'No se pudieron cargar las noticias.'
+        )
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
+      }
     }
-  }
+
+    loadNews()
+
+    return () => controller.abort()
+  }, [])
 
   if (loading) {
     return (

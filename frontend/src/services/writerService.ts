@@ -26,8 +26,13 @@ async function handleResponse(response: Response) {
   return data
 }
 
-export async function getWriters(): Promise<Writer[]> {
-  const response = await fetch(`${API_URL}/writers`)
+export async function getWriters(
+  signal?: AbortSignal
+): Promise<Writer[]> {
+  const response = await fetch(
+    `${API_URL}/writers`,
+    { signal }
+  )
   return handleResponse(response)
 }
 

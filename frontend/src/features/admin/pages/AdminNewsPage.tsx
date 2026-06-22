@@ -14,7 +14,26 @@ export default function AdminNewsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadNews()
+    const controller = new AbortController()
+
+    getNews(controller.signal)
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setNews(data)
+        }
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return
+        console.error(error)
+        alert('Error cargando noticias')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
+      })
+
+    return () => controller.abort()
   }, [])
 
   async function loadNews() {
