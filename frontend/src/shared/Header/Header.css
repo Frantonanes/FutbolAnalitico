@@ -23,17 +23,19 @@
 }
 
 .logo {
+  width: 240px;
+  height: 64px;
   display: flex;
   align-items: center;
+  overflow: hidden;
   text-decoration: none;
-  white-space: nowrap;
 }
 
 .logo-img {
-  width: 260px;
-  height: 72px;
+  width: 100%;
+  height: auto;
   display: block;
-  object-fit: contain;
+  transform: translateY(-1px);
 }
 
 .logo span {
@@ -266,8 +268,14 @@
     grid-row: 2;
   }
 
+   .logo {
+    width: 190px;
+    height: 52px;
+  }
+
   .logo-img {
-    height: 42px;
+    width: 100%;
+    height: auto;
   }
 
   .header-bottom {
