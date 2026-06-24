@@ -7,35 +7,38 @@
 .header-top {
   position: sticky;
   top: 0;
-  z-index: 4500;
+  z-index: 4000;
 
   display: grid;
-  grid-template-columns: auto minmax(260px, 520px) auto;
+  grid-template-columns:
+    minmax(240px, 1fr)
+    minmax(320px, 520px)
+    minmax(240px, 1fr);
   align-items: center;
   gap: 1.5rem;
 
-  padding: 1rem 2rem;
+  min-height: 96px;
+  padding: 0.75rem 2rem;
 
   background: #011025;
-  backdrop-filter: none;
-
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .logo {
-  width: 240px;
-  height: 60px;
   display: flex;
   align-items: center;
-  overflow: hidden;
+  justify-self: start;
   text-decoration: none;
+  overflow: visible;
 }
 
 .logo-img {
-  width: 100%;
+  width: 240px;
   height: auto;
+  max-height: 72px;
   display: block;
-  transform: translateY(-1px);
+  object-fit: contain;
+  transform: none;
 }
 
 .logo span {
@@ -45,11 +48,8 @@
 /* BUSCADOR */
 
 .search-container {
-  display: flex;
   width: 100%;
-  border-radius: 999px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  justify-self: center;
 }
 
 .search-container input {
@@ -87,7 +87,7 @@
 .admin-dropdown {
   position: relative;
   display: flex;
-  justify-content: flex-end;
+  justify-self: end;
 }
 
 .news-btn {
@@ -194,7 +194,7 @@
 
 .header-bottom {
   position: sticky;
-  top: 77px;
+  top: 96px;
   z-index: 3000;
 
   display: flex;
