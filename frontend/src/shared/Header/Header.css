@@ -260,6 +260,7 @@
   .header-top {
     grid-template-columns: 1fr auto;
     gap: 1rem;
+    min-height: 138px;
     padding: 0.9rem 1rem;
   }
 
@@ -270,7 +271,7 @@
 
    .logo {
     width: 190px;
-    height: 52px;
+    height: 58px;
   }
 
   .logo-img {
@@ -279,7 +280,7 @@
   }
 
   .header-bottom {
-    top: 126px;
+    top: 138px;
     justify-content: flex-start;
   }
 }
