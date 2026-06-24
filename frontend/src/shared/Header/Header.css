@@ -16,8 +16,8 @@
 
   padding: 1rem 2rem;
 
-  background: rgba(26, 30, 41, 0.92);
-  backdrop-filter: blur(14px);
+    background: #011025;
+  backdrop-filter: none;
 
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
