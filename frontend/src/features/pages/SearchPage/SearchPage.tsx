@@ -17,19 +17,57 @@ function normalizeText(value: unknown) {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .replace(/#/g, '')
+    .replace(/-/g, ' ')
+    .replace(/_/g, ' ')
     .trim()
 }
 
+function normalizeList(value: unknown): string[] {
+  if (!value) return []
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => {
+      if (typeof item === 'string') return [item]
+
+      if (typeof item === 'object' && item !== null) {
+        return Object.values(item)
+          .filter((value) => typeof value === 'string')
+          .map(String)
+      }
+
+      return []
+    })
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
+
+  return []
+}
+
 function newsMatches(item: News, search: string) {
+  const hashtags = normalizeList(item.hashtags)
+  const teams = normalizeList(item.teams)
+
+  const sections = (item.sections || []).flatMap((section) => [
+    section.content,
+    section.image
+  ])
+
   const searchableText = [
     item.title,
     item.subtitle,
     item.category,
     item.slug,
     item.competition,
-    ...(item.hashtags || []),
-    ...(item.teams || []),
-    ...(item.sections || []).map((section) => section.content)
+    ...hashtags,
+    ...teams,
+    ...sections
   ]
     .map(normalizeText)
     .join(' ')
