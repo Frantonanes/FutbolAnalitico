@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import NewsCard from '../../home/Featured/NewsCard'
@@ -12,31 +12,81 @@ import type { Prediction } from '../../../shared/types/Prediction'
 
 import './SearchPage.css'
 
+function normalizeText(value: unknown) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+}
+
+function newsMatches(item: News, search: string) {
+  const searchableText = [
+    item.title,
+    item.subtitle,
+    item.category,
+    item.slug,
+    item.competition,
+    ...(item.hashtags || []),
+    ...(item.teams || []),
+    ...(item.sections || []).map((section) => section.content)
+  ]
+    .map(normalizeText)
+    .join(' ')
+
+  return searchableText.includes(search)
+}
+
+function predictionMatches(item: Prediction, search: string) {
+  const searchableText = [
+    item.homeTeam,
+    item.awayTeam,
+    item.competition,
+    item.slug,
+    item.date,
+    ...(item.blocks || []).flatMap((block) => [
+      block.title,
+      ...(block.items || []).flatMap((blockItem) => [
+        blockItem.label,
+        blockItem.value
+      ])
+    ])
+  ]
+    .map(normalizeText)
+    .join(' ')
+
+  return searchableText.includes(search)
+}
+
 export default function SearchPage() {
   const [params] = useSearchParams()
+
   const query = params.get('q') || ''
+  const normalizedQuery = useMemo(
+    () => normalizeText(query),
+    [query]
+  )
 
   const [news, setNews] = useState<News[]>([])
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     const controller = new AbortController()
 
     async function loadResults() {
-      if (!query.trim()) {
-        await Promise.resolve()
-
-        if (controller.signal.aborted) return
-
+      if (!normalizedQuery) {
         setNews([])
         setPredictions([])
         setLoading(false)
+        setError('')
         return
       }
 
       try {
         setLoading(true)
+        setError('')
 
         const [newsData, predictionsData] = await Promise.all([
           getNews(controller.signal),
@@ -45,26 +95,24 @@ export default function SearchPage() {
 
         if (controller.signal.aborted) return
 
-        const search = query.toLowerCase().trim()
-
         setNews(
           newsData.filter((item: News) =>
-            item.title.toLowerCase().includes(search) ||
-            (item.subtitle || '').toLowerCase().includes(search) ||
-            (item.category || '').toLowerCase().includes(search)
+            newsMatches(item, normalizedQuery)
           )
         )
 
         setPredictions(
           predictionsData.filter((item: Prediction) =>
-            item.homeTeam.toLowerCase().includes(search) ||
-            item.awayTeam.toLowerCase().includes(search) ||
-            item.competition.toLowerCase().includes(search)
+            predictionMatches(item, normalizedQuery)
           )
         )
-      } catch (error) {
+      } catch (err) {
         if (controller.signal.aborted) return
-        console.error(error)
+
+        console.error(err)
+        setError('No pudimos cargar los resultados. Intentá nuevamente.')
+        setNews([])
+        setPredictions([])
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false)
@@ -75,9 +123,11 @@ export default function SearchPage() {
     loadResults()
 
     return () => controller.abort()
-  }, [query])
+  }, [normalizedQuery])
 
-  const hasResults = news.length > 0 || predictions.length > 0
+  const totalResults = news.length + predictions.length
+  const hasQuery = normalizedQuery.length > 0
+  const hasResults = totalResults > 0
 
   return (
     <main className="search-page">
@@ -85,16 +135,20 @@ export default function SearchPage() {
         <span>Resultados</span>
 
         <h1>
-          Búsqueda: {query || 'Sin término'}
+          {hasQuery
+            ? `Búsqueda: ${query}`
+            : 'Buscar en Fútbol Analítico'}
         </h1>
 
         <p>
-          Noticias y predicciones relacionadas con tu búsqueda.
+          Encontrá noticias, predicciones, equipos, competiciones y jugadores.
         </p>
 
-        <strong>
-          {news.length + predictions.length} resultados encontrados
-        </strong>
+        {hasQuery && !loading && !error && (
+          <strong>
+            {totalResults} resultado{totalResults !== 1 ? 's' : ''} encontrado{totalResults !== 1 ? 's' : ''}
+          </strong>
+        )}
       </section>
 
       {loading && (
@@ -103,13 +157,25 @@ export default function SearchPage() {
         </div>
       )}
 
-      {!loading && !hasResults && (
+      {!loading && error && (
+        <div className="search-page__empty search-page__empty--error">
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && !hasQuery && (
+        <div className="search-page__empty">
+          Escribí una búsqueda desde el navegador superior.
+        </div>
+      )}
+
+      {!loading && !error && hasQuery && !hasResults && (
         <div className="search-page__empty">
           No se encontraron resultados para "{query}".
         </div>
       )}
 
-      {!loading && news.length > 0 && (
+      {!loading && !error && news.length > 0 && (
         <section className="search-page__section">
           <div className="search-page__section-header">
             <span>Noticias</span>
@@ -131,7 +197,7 @@ export default function SearchPage() {
         </section>
       )}
 
-      {!loading && predictions.length > 0 && (
+      {!loading && !error && predictions.length > 0 && (
         <section className="search-page__section">
           <div className="search-page__section-header">
             <span>Predicciones</span>
