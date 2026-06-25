@@ -54,10 +54,19 @@ function newsMatches(item: News, search: string) {
   const hashtags = normalizeList(item.hashtags)
   const teams = normalizeList(item.teams)
 
-  const sections = (item.sections || []).flatMap((section) => [
-    section.content,
-    section.image
-  ])
+  const sections = (item.sections || []).flatMap((section) => {
+    const values: string[] = []
+
+    if ('content' in section && section.content) {
+      values.push(section.content)
+    }
+
+    if ('image' in section && section.image) {
+      values.push(section.image)
+    }
+
+    return values
+  })
 
   const searchableText = [
     item.title,
