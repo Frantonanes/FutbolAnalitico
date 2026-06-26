@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   useNavigate,
   useParams
@@ -9,7 +9,6 @@ import type {
 } from '../../../shared/types/Prediction'
 
 import { slugify } from '../../../shared/utils/slugify'
-import './AdminForm.css'
 
 import {
   getPredictionById,
@@ -21,6 +20,8 @@ import {
   getTeamsByCompetition
 } from '../../../services/contentService'
 
+import './AdminForm.css'
+
 type Competition = {
   _id: string
   name: string
@@ -31,6 +32,82 @@ type Team = {
   name: string
   logo: string
   competitionId: string
+}
+
+type TeamSelectorProps = {
+  label: string
+  placeholder: string
+  value: string
+  search: string
+  teams: Team[]
+  disabled: boolean
+  onSearchChange: (value: string) => void
+  onChange: (value: string) => void
+}
+
+function TeamSelector({
+  label,
+  placeholder,
+  value,
+  search,
+  teams,
+  disabled,
+  onSearchChange,
+  onChange
+}: TeamSelectorProps) {
+  const filteredTeams = useMemo(() => {
+    const normalizedSearch = search.toLowerCase().trim()
+
+    return teams.filter((team) =>
+      team.name.toLowerCase().includes(normalizedSearch)
+    )
+  }, [teams, search])
+
+  const selectedTeam = teams.find((team) => team._id === value)
+
+  return (
+    <section className="admin-form__section">
+      <h2>{label}</h2>
+
+      <input
+        placeholder={placeholder}
+        value={search}
+        onChange={(e) => onSearchChange(e.target.value)}
+        disabled={disabled}
+      />
+
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+      >
+        <option value="">Seleccionar equipo</option>
+
+        {filteredTeams.map((team) => (
+          <option key={team._id} value={team._id}>
+            {team.name}
+          </option>
+        ))}
+      </select>
+
+      {selectedTeam?.logo && (
+        <div className="team-selector-preview">
+          <img
+            src={selectedTeam.logo}
+            alt={selectedTeam.name}
+          />
+
+          <strong>{selectedTeam.name}</strong>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function isPredictionBlockItem(
+  item: { label: string; value: string } | null
+): item is { label: string; value: string } {
+  return item !== null
 }
 
 export default function EditPredictionPage() {
@@ -50,39 +127,31 @@ export default function EditPredictionPage() {
     useState<'pending' | 'finished'>('pending')
   const [finalScore, setFinalScore] = useState('')
 
-  const [homeProbability, setHomeProbability] =
-    useState(50)
-  const [drawProbability, setDrawProbability] =
-    useState(25)
-  const [awayProbability, setAwayProbability] =
-    useState(25)
+  const [homeProbability, setHomeProbability] = useState(50)
+  const [drawProbability, setDrawProbability] = useState(25)
+  const [awayProbability, setAwayProbability] = useState(25)
 
-  const [blocks, setBlocks] =
-    useState<PredictionBlock[]>([])
-
+  const [blocks, setBlocks] = useState<PredictionBlock[]>([])
   const [blockTitle, setBlockTitle] = useState('')
   const [blockText, setBlockText] = useState('')
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  const homeTeam = teams.find(
-    (team) => team._id === homeTeamId
-  )
+  const [homeTeamSearch, setHomeTeamSearch] = useState('')
+  const [awayTeamSearch, setAwayTeamSearch] = useState('')
 
-  const awayTeam = teams.find(
-    (team) => team._id === awayTeamId
-  )
+  const totalProbability =
+    homeProbability + drawProbability + awayProbability
 
   useEffect(() => {
     if (!id) return
+
     const predictionId = id
     const controller = new AbortController()
 
     async function loadPageData() {
       try {
-        setLoading(true)
-
         const [prediction, competitionsData] =
           await Promise.all([
             getPredictionById(
@@ -100,29 +169,18 @@ export default function EditPredictionPage() {
           prediction.competitionId ||
           competitionsData.find(
             (competition: Competition) =>
-              competition.name ===
-              prediction.competition
+              competition.name === prediction.competition
           )?._id ||
           ''
 
         setCompetitionId(currentCompetitionId)
         setDate(prediction.date || '')
-
         setStatus(prediction.status || 'pending')
         setFinalScore(prediction.finalScore || '')
 
-        setHomeTeamId(prediction.homeTeamId || '')
-        setAwayTeamId(prediction.awayTeamId || '')
-
-        setHomeProbability(
-          prediction.homeProbability ?? 50
-        )
-        setDrawProbability(
-          prediction.drawProbability ?? 25
-        )
-        setAwayProbability(
-          prediction.awayProbability ?? 25
-        )
+        setHomeProbability(prediction.homeProbability ?? 50)
+        setDrawProbability(prediction.drawProbability ?? 25)
+        setAwayProbability(prediction.awayProbability ?? 25)
 
         setBlocks(prediction.blocks || [])
 
@@ -137,23 +195,27 @@ export default function EditPredictionPage() {
 
           setTeams(teamsData)
 
-          if (!prediction.homeTeamId) {
-            const home = teamsData.find(
+          const home =
+            prediction.homeTeamId ||
+            teamsData.find(
               (team: Team) =>
                 team.name === prediction.homeTeam
-            )
+            )?._id ||
+            ''
 
-            if (home) setHomeTeamId(home._id)
-          }
-
-          if (!prediction.awayTeamId) {
-            const away = teamsData.find(
+          const away =
+            prediction.awayTeamId ||
+            teamsData.find(
               (team: Team) =>
                 team.name === prediction.awayTeam
-            )
+            )?._id ||
+            ''
 
-            if (away) setAwayTeamId(away._id)
-          }
+          setHomeTeamId(home)
+          setAwayTeamId(away)
+
+          setHomeTeamSearch(prediction.homeTeam || '')
+          setAwayTeamSearch(prediction.awayTeam || '')
         }
       } catch (error) {
         if (controller.signal.aborted) return
@@ -175,13 +237,14 @@ export default function EditPredictionPage() {
     setCompetitionId(id)
     setHomeTeamId('')
     setAwayTeamId('')
+    setHomeTeamSearch('')
+    setAwayTeamSearch('')
     setTeams([])
 
     if (!id) return
 
     try {
-      const data =
-        await getTeamsByCompetition(id)
+      const data = await getTeamsByCompetition(id)
 
       setTeams(data)
     } catch (error) {
@@ -198,28 +261,19 @@ export default function EditPredictionPage() {
       .map((line) => {
         const separatorIndex = line.indexOf(':')
 
-        if (separatorIndex === -1) {
-          return null
-        }
+        if (separatorIndex === -1) return null
 
-        const label = line
-          .slice(0, separatorIndex)
-          .trim()
+        const label = line.slice(0, separatorIndex).trim()
+        const value = line.slice(separatorIndex + 1).trim()
 
-        const value = line
-          .slice(separatorIndex + 1)
-          .trim()
-
-        if (!label || !value) {
-          return null
-        }
+        if (!label || !value) return null
 
         return {
           label,
           value
         }
       })
-      .filter((item) => item !== null)
+      .filter(isPredictionBlockItem)
   }
 
   function addBlock() {
@@ -231,9 +285,7 @@ export default function EditPredictionPage() {
     const parsedItems = parseBlockText(blockText)
 
     if (parsedItems.length === 0) {
-      alert(
-        'Pegá datos con el formato: Goles: 2.8'
-      )
+      alert('Pegá datos con el formato: Goles: 2.8')
       return
     }
 
@@ -250,22 +302,13 @@ export default function EditPredictionPage() {
   }
 
   function removeBlock(index: number) {
-    setBlocks(
-      blocks.filter((_, i) => i !== index)
-    )
+    setBlocks(blocks.filter((_, i) => i !== index))
   }
 
-  async function handleSubmit(
-    e: React.FormEvent
-  ) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
     if (!id) return
-
-    const total =
-      homeProbability +
-      drawProbability +
-      awayProbability
 
     if (!competitionId) {
       alert('Seleccioná una competición')
@@ -278,9 +321,7 @@ export default function EditPredictionPage() {
     }
 
     if (homeTeamId === awayTeamId) {
-      alert(
-        'El equipo local y visitante no pueden ser el mismo'
-      )
+      alert('El equipo local y visitante no pueden ser el mismo')
       return
     }
 
@@ -289,10 +330,7 @@ export default function EditPredictionPage() {
       return
     }
 
-    if (
-      status === 'finished' &&
-      !finalScore.trim()
-    ) {
+    if (status === 'finished' && !finalScore.trim()) {
       alert('Ingresá el resultado final')
       return
     }
@@ -305,31 +343,21 @@ export default function EditPredictionPage() {
       drawProbability > 100 ||
       awayProbability > 100
     ) {
-      alert(
-        'Las probabilidades deben estar entre 0 y 100'
-      )
+      alert('Las probabilidades deben estar entre 0 y 100')
       return
     }
 
-    if (total !== 100) {
-      alert(
-        'Las probabilidades deben sumar 100%'
-      )
+    if (totalProbability !== 100) {
+      alert('Las probabilidades deben sumar 100%')
       return
     }
 
     const competition = competitions.find(
-      (competition) =>
-        competition._id === competitionId
+      (competition) => competition._id === competitionId
     )
 
-    const home = teams.find(
-      (team) => team._id === homeTeamId
-    )
-
-    const away = teams.find(
-      (team) => team._id === awayTeamId
-    )
+    const home = teams.find((team) => team._id === homeTeamId)
+    const away = teams.find((team) => team._id === awayTeamId)
 
     if (!competition || !home || !away) {
       alert('Datos inválidos')
@@ -340,9 +368,7 @@ export default function EditPredictionPage() {
       setSaving(true)
 
       await updatePrediction(id, {
-        slug: slugify(
-          `${home.name} vs ${away.name}`
-        ),
+        slug: slugify(`${home.name} vs ${away.name}`),
 
         competition: competition.name,
         competitionId,
@@ -383,7 +409,7 @@ export default function EditPredictionPage() {
 
   if (loading) {
     return (
-      <div className="admin-form-page">
+      <div className="admin-form-page admin-form-page--wide">
         <h1>Editar predicción</h1>
         <p>Cargando predicción...</p>
       </div>
@@ -391,215 +417,159 @@ export default function EditPredictionPage() {
   }
 
   return (
-    <div className="admin-form-page">
+    <div className="admin-form-page admin-form-page--wide">
       <h1>Editar predicción</h1>
 
       <form
         onSubmit={handleSubmit}
-        className="admin-form"
+        className="admin-form admin-form--wide"
       >
-        <label>
-          Competición
-          <select
-            value={competitionId}
-            onChange={(e) =>
-              handleCompetitionChange(
-                e.target.value
-              )
+        <section className="admin-form__section">
+          <h2>Datos del partido</h2>
+
+          <label>
+            Competición
+            <select
+              value={competitionId}
+              onChange={(e) =>
+                handleCompetitionChange(e.target.value)
+              }
+            >
+              <option value="">Seleccionar competición</option>
+
+              {competitions.map((competition) => (
+                <option
+                  key={competition._id}
+                  value={competition._id}
+                >
+                  {competition.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Fecha
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </label>
+
+          <label>
+            Estado del partido
+            <select
+              value={status}
+              onChange={(e) =>
+                setStatus(
+                  e.target.value as 'pending' | 'finished'
+                )
+              }
+            >
+              <option value="pending">Pendiente</option>
+              <option value="finished">Partido finalizado</option>
+            </select>
+          </label>
+
+          {status === 'finished' && (
+            <input
+              placeholder="Resultado final. Ej: Argentina 2 - 1 Brasil"
+              value={finalScore}
+              onChange={(e) => setFinalScore(e.target.value)}
+            />
+          )}
+        </section>
+
+        <TeamSelector
+          label="Equipo local"
+          placeholder="Buscar equipo local. Ej: Argentina"
+          value={homeTeamId}
+          search={homeTeamSearch}
+          teams={teams}
+          disabled={!competitionId}
+          onSearchChange={setHomeTeamSearch}
+          onChange={setHomeTeamId}
+        />
+
+        <TeamSelector
+          label="Equipo visitante"
+          placeholder="Buscar equipo visitante. Ej: Brasil"
+          value={awayTeamId}
+          search={awayTeamSearch}
+          teams={teams}
+          disabled={!competitionId}
+          onSearchChange={setAwayTeamSearch}
+          onChange={setAwayTeamId}
+        />
+
+        <section className="admin-form__section">
+          <h2>Probabilidades</h2>
+
+          <label>
+            Local %
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={homeProbability}
+              onChange={(e) =>
+                setHomeProbability(Number(e.target.value))
+              }
+            />
+          </label>
+
+          <label>
+            Empate %
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={drawProbability}
+              onChange={(e) =>
+                setDrawProbability(Number(e.target.value))
+              }
+            />
+          </label>
+
+          <label>
+            Visitante %
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={awayProbability}
+              onChange={(e) =>
+                setAwayProbability(Number(e.target.value))
+              }
+            />
+          </label>
+
+          <p
+            className={
+              totalProbability === 100
+                ? 'prediction-total prediction-total--ok'
+                : 'prediction-total prediction-total--error'
             }
           >
-            <option value="">
-              Seleccionar competición
-            </option>
+            Total: {totalProbability}%
+          </p>
+        </section>
 
-            {competitions.map((competition) => (
-              <option
-                key={competition._id}
-                value={competition._id}
-              >
-                {competition.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <section className="admin-form__section">
+          <h2>Bloques de datos</h2>
 
-        <label>
-          Fecha
-          <input
-            type="date"
-            value={date}
-            onChange={(e) =>
-              setDate(e.target.value)
-            }
-          />
-        </label>
+          <label>
+            Título del bloque
+            <input
+              placeholder="Ej: Estadísticas esperadas"
+              value={blockTitle}
+              onChange={(e) => setBlockTitle(e.target.value)}
+            />
+          </label>
 
-        <label>
-          Estado del partido
-          <select
-            value={status}
-            onChange={(e) =>
-              setStatus(
-                e.target.value as
-                  | 'pending'
-                  | 'finished'
-              )
-            }
-          >
-            <option value="pending">
-              Pendiente
-            </option>
-
-            <option value="finished">
-              Partido finalizado
-            </option>
-          </select>
-        </label>
-
-        {status === 'finished' && (
-          <input
-            placeholder="Resultado final. Ej: Argentina 2 - 1 Brasil"
-            value={finalScore}
-            onChange={(e) =>
-              setFinalScore(e.target.value)
-            }
-          />
-        )}
-
-        <label>
-          Equipo local
-          <select
-            value={homeTeamId}
-            onChange={(e) =>
-              setHomeTeamId(e.target.value)
-            }
-            disabled={!competitionId}
-          >
-            <option value="">
-              Seleccionar equipo
-            </option>
-
-            {teams.map((team) => (
-              <option
-                key={team._id}
-                value={team._id}
-              >
-                {team.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {homeTeam?.logo && (
-          <img
-            src={homeTeam.logo}
-            alt={homeTeam.name}
-            className="competition-logo-preview"
-          />
-        )}
-
-        <label>
-          Equipo visitante
-          <select
-            value={awayTeamId}
-            onChange={(e) =>
-              setAwayTeamId(e.target.value)
-            }
-            disabled={!competitionId}
-          >
-            <option value="">
-              Seleccionar equipo
-            </option>
-
-            {teams.map((team) => (
-              <option
-                key={team._id}
-                value={team._id}
-              >
-                {team.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {awayTeam?.logo && (
-          <img
-            src={awayTeam.logo}
-            alt={awayTeam.name}
-            className="competition-logo-preview"
-          />
-        )}
-
-        <h2>Probabilidades</h2>
-
-        <label>
-          Local %
-          <input
-            type="number"
-            min="0"
-            max="100"
-            value={homeProbability}
-            onChange={(e) =>
-              setHomeProbability(
-                Number(e.target.value)
-              )
-            }
-          />
-        </label>
-
-        <label>
-          Empate %
-          <input
-            type="number"
-            min="0"
-            max="100"
-            value={drawProbability}
-            onChange={(e) =>
-              setDrawProbability(
-                Number(e.target.value)
-              )
-            }
-          />
-        </label>
-
-        <label>
-          Visitante %
-          <input
-            type="number"
-            min="0"
-            max="100"
-            value={awayProbability}
-            onChange={(e) =>
-              setAwayProbability(
-                Number(e.target.value)
-              )
-            }
-          />
-        </label>
-
-        <p>
-          Total:{' '}
-          {homeProbability +
-            drawProbability +
-            awayProbability}
-          %
-        </p>
-
-        <h2>Bloques de datos</h2>
-
-        <label>
-          Título del bloque
-          <input
-            placeholder="Ej: Estadísticas esperadas"
-            value={blockTitle}
-            onChange={(e) =>
-              setBlockTitle(e.target.value)
-            }
-          />
-        </label>
-
-        <textarea
-          placeholder={`Pegá los datos así:
+          <textarea
+            placeholder={`Pegá los datos así:
 
 Goles: 2.8
 Tiros totales: 24
@@ -608,61 +578,46 @@ Corners: 9
 Tarjetas: 4
 Penales: 0.25
 Faltas: 24`}
-          value={blockText}
-          onChange={(e) =>
-            setBlockText(e.target.value)
-          }
-          rows={9}
-        />
+            value={blockText}
+            onChange={(e) => setBlockText(e.target.value)}
+            rows={9}
+          />
 
-        <button
-          type="button"
-          onClick={addBlock}
-        >
-          Agregar bloque
-        </button>
+          <button type="button" onClick={addBlock}>
+            Agregar bloque
+          </button>
 
-        <p>Bloques creados: {blocks.length}</p>
+          <p>Bloques creados: {blocks.length}</p>
 
-        {blocks.length === 0 ? (
-          <p>No hay bloques cargados.</p>
-        ) : (
-          blocks.map((block, index) => (
-            <div
-              key={`${block.title}-${index}`}
-              className="section-preview"
-            >
-              <strong>{block.title}</strong>
+          {blocks.length === 0 ? (
+            <p>No hay bloques cargados.</p>
+          ) : (
+            blocks.map((block, index) => (
+              <div
+                key={`${block.title}-${index}`}
+                className="section-preview"
+              >
+                <strong>{block.title}</strong>
 
-              {block.items.map(
-                (item, itemIndex) => (
-                  <p
-                    key={`${item.label}-${itemIndex}`}
-                  >
+                {block.items.map((item, itemIndex) => (
+                  <p key={`${item.label}-${itemIndex}`}>
                     {item.label}: {item.value}
                   </p>
-                )
-              )}
+                ))}
 
-              <button
-                type="button"
-                onClick={() =>
-                  removeBlock(index)
-                }
-              >
-                Eliminar bloque
-              </button>
-            </div>
-          ))
-        )}
+                <button
+                  type="button"
+                  onClick={() => removeBlock(index)}
+                >
+                  Eliminar bloque
+                </button>
+              </div>
+            ))
+          )}
+        </section>
 
-        <button
-          type="submit"
-          disabled={saving}
-        >
-          {saving
-            ? 'Guardando...'
-            : 'Guardar cambios'}
+        <button type="submit" disabled={saving}>
+          {saving ? 'Guardando...' : 'Guardar cambios'}
         </button>
       </form>
     </div>
