@@ -1,13 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+
 import { createPrediction } from '../../../services/predictionService'
 import {
   getCompetitions,
   getTeamsByCompetition
 } from '../../../services/contentService'
+
 import type {
   PredictionBlock
 } from '../../../shared/types/Prediction'
+
 import { slugify } from '../../../shared/utils/slugify'
+
 import './AdminForm.css'
 
 type Competition = {
@@ -22,6 +26,82 @@ type Team = {
   competitionId: string
 }
 
+type TeamSelectorProps = {
+  label: string
+  placeholder: string
+  value: string
+  search: string
+  teams: Team[]
+  disabled: boolean
+  onSearchChange: (value: string) => void
+  onChange: (value: string) => void
+}
+
+function TeamSelector({
+  label,
+  placeholder,
+  value,
+  search,
+  teams,
+  disabled,
+  onSearchChange,
+  onChange
+}: TeamSelectorProps) {
+  const filteredTeams = useMemo(() => {
+    const normalizedSearch = search.toLowerCase().trim()
+
+    return teams.filter((team) =>
+      team.name.toLowerCase().includes(normalizedSearch)
+    )
+  }, [teams, search])
+
+  const selectedTeam = teams.find((team) => team._id === value)
+
+  return (
+    <div className="admin-form__section">
+      <h2>{label}</h2>
+
+      <input
+        placeholder={placeholder}
+        value={search}
+        onChange={(e) => onSearchChange(e.target.value)}
+        disabled={disabled}
+      />
+
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+      >
+        <option value="">Seleccionar equipo</option>
+
+        {filteredTeams.map((team) => (
+          <option key={team._id} value={team._id}>
+            {team.name}
+          </option>
+        ))}
+      </select>
+
+      {selectedTeam?.logo && (
+        <div className="team-selector-preview">
+          <img
+            src={selectedTeam.logo}
+            alt={selectedTeam.name}
+          />
+
+          <strong>{selectedTeam.name}</strong>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function isPredictionBlockItem(
+  item: { label: string; value: string } | null
+): item is { label: string; value: string } {
+  return item !== null
+}
+
 export default function CreatePredictionPage() {
   const [competitions, setCompetitions] =
     useState<Competition[]>([])
@@ -32,16 +112,11 @@ export default function CreatePredictionPage() {
   const [awayTeamId, setAwayTeamId] = useState('')
   const [date, setDate] = useState('')
 
-  const [homeProbability, setHomeProbability] =
-    useState(50)
-  const [drawProbability, setDrawProbability] =
-    useState(25)
-  const [awayProbability, setAwayProbability] =
-    useState(25)
+  const [homeProbability, setHomeProbability] = useState(50)
+  const [drawProbability, setDrawProbability] = useState(25)
+  const [awayProbability, setAwayProbability] = useState(25)
 
-  const [blocks, setBlocks] =
-    useState<PredictionBlock[]>([])
-
+  const [blocks, setBlocks] = useState<PredictionBlock[]>([])
   const [blockTitle, setBlockTitle] = useState('')
   const [blockText, setBlockText] = useState('')
 
@@ -51,25 +126,8 @@ export default function CreatePredictionPage() {
   const [homeTeamSearch, setHomeTeamSearch] = useState('')
   const [awayTeamSearch, setAwayTeamSearch] = useState('')
 
-  const homeTeam = teams.find(
-    (team) => team._id === homeTeamId
-  )
-
-  const awayTeam = teams.find(
-    (team) => team._id === awayTeamId
-  )
-
-  const filteredHomeTeams = teams.filter((team) =>
-  team.name
-    .toLowerCase()
-    .includes(homeTeamSearch.toLowerCase())
-)
-
-const filteredAwayTeams = teams.filter((team) =>
-  team.name
-    .toLowerCase()
-    .includes(awayTeamSearch.toLowerCase())
-)
+  const totalProbability =
+    homeProbability + drawProbability + awayProbability
 
   useEffect(() => {
     const controller = new AbortController()
@@ -122,28 +180,19 @@ const filteredAwayTeams = teams.filter((team) =>
       .map((line) => {
         const separatorIndex = line.indexOf(':')
 
-        if (separatorIndex === -1) {
-          return null
-        }
+        if (separatorIndex === -1) return null
 
-        const label = line
-          .slice(0, separatorIndex)
-          .trim()
+        const label = line.slice(0, separatorIndex).trim()
+        const value = line.slice(separatorIndex + 1).trim()
 
-        const value = line
-          .slice(separatorIndex + 1)
-          .trim()
-
-        if (!label || !value) {
-          return null
-        }
+        if (!label || !value) return null
 
         return {
           label,
           value
         }
       })
-      .filter((item) => item !== null)
+      .filter(isPredictionBlockItem)
   }
 
   function addBlock() {
@@ -155,9 +204,7 @@ const filteredAwayTeams = teams.filter((team) =>
     const parsedItems = parseBlockText(blockText)
 
     if (parsedItems.length === 0) {
-      alert(
-        'Pegá datos con el formato: Goles: 2.8'
-      )
+      alert('Pegá datos con el formato: Goles: 2.8')
       return
     }
 
@@ -176,11 +223,6 @@ const filteredAwayTeams = teams.filter((team) =>
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    const total =
-      homeProbability +
-      drawProbability +
-      awayProbability
-
     if (!competitionId) {
       alert('Seleccioná una competición')
       return
@@ -192,9 +234,7 @@ const filteredAwayTeams = teams.filter((team) =>
     }
 
     if (homeTeamId === awayTeamId) {
-      alert(
-        'El equipo local y visitante no pueden ser el mismo'
-      )
+      alert('El equipo local y visitante no pueden ser el mismo')
       return
     }
 
@@ -211,13 +251,11 @@ const filteredAwayTeams = teams.filter((team) =>
       drawProbability > 100 ||
       awayProbability > 100
     ) {
-      alert(
-        'Las probabilidades deben estar entre 0 y 100'
-      )
+      alert('Las probabilidades deben estar entre 0 y 100')
       return
     }
 
-    if (total !== 100) {
+    if (totalProbability !== 100) {
       alert('Las probabilidades deben sumar 100%')
       return
     }
@@ -226,13 +264,8 @@ const filteredAwayTeams = teams.filter((team) =>
       (item) => item._id === competitionId
     )
 
-    const home = teams.find(
-      (team) => team._id === homeTeamId
-    )
-
-    const away = teams.find(
-      (team) => team._id === awayTeamId
-    )
+    const home = teams.find((team) => team._id === homeTeamId)
+    const away = teams.find((team) => team._id === awayTeamId)
 
     if (!competition || !home || !away) {
       alert('Completá todos los campos')
@@ -294,7 +327,7 @@ const filteredAwayTeams = teams.filter((team) =>
 
   if (loading) {
     return (
-      <div className="admin-form-page">
+      <div className="admin-form-page admin-form-page--wide">
         <h1>Crear predicción</h1>
         <p>Cargando formulario...</p>
       </div>
@@ -302,196 +335,127 @@ const filteredAwayTeams = teams.filter((team) =>
   }
 
   return (
-    <div className="admin-form-page">
+    <div className="admin-form-page admin-form-page--wide">
       <h1>Crear predicción</h1>
 
       <form
         onSubmit={handleSubmit}
-        className="admin-form"
+        className="admin-form admin-form--wide"
       >
-        <label>
-          Competición
-          <select
-            value={competitionId}
+        <section className="admin-form__section">
+          <h2>Datos del partido</h2>
+
+          <label>
+            Competición
+            <select
+              value={competitionId}
+              onChange={(e) =>
+                handleCompetitionChange(e.target.value)
+              }
+            >
+              <option value="">Seleccionar competición</option>
+
+              {competitions.map((competition) => (
+                <option
+                  key={competition._id}
+                  value={competition._id}
+                >
+                  {competition.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Fecha
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </label>
+        </section>
+
+        <TeamSelector
+          label="Equipo local"
+          placeholder="Buscar equipo local. Ej: Argentina"
+          value={homeTeamId}
+          search={homeTeamSearch}
+          teams={teams}
+          disabled={!competitionId}
+          onSearchChange={setHomeTeamSearch}
+          onChange={setHomeTeamId}
+        />
+
+        <TeamSelector
+          label="Equipo visitante"
+          placeholder="Buscar equipo visitante. Ej: Brasil"
+          value={awayTeamId}
+          search={awayTeamSearch}
+          teams={teams}
+          disabled={!competitionId}
+          onSearchChange={setAwayTeamSearch}
+          onChange={setAwayTeamId}
+        />
+
+        <section className="admin-form__section">
+          <h2>Probabilidades</h2>
+
+          <input
+            type="number"
+            min="0"
+            max="100"
+            value={homeProbability}
             onChange={(e) =>
-              handleCompetitionChange(e.target.value)
+              setHomeProbability(Number(e.target.value))
+            }
+            placeholder="Probabilidad local"
+          />
+
+          <input
+            type="number"
+            min="0"
+            max="100"
+            value={drawProbability}
+            onChange={(e) =>
+              setDrawProbability(Number(e.target.value))
+            }
+            placeholder="Probabilidad empate"
+          />
+
+          <input
+            type="number"
+            min="0"
+            max="100"
+            value={awayProbability}
+            onChange={(e) =>
+              setAwayProbability(Number(e.target.value))
+            }
+            placeholder="Probabilidad visitante"
+          />
+
+          <p
+            className={
+              totalProbability === 100
+                ? 'prediction-total prediction-total--ok'
+                : 'prediction-total prediction-total--error'
             }
           >
-            <option value="">
-              Seleccionar competición
-            </option>
+            Total: {totalProbability}%
+          </p>
+        </section>
 
-            {competitions.map((competition) => (
-              <option
-                key={competition._id}
-                value={competition._id}
-              >
-                {competition.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <section className="admin-form__section">
+          <h2>Bloques de datos</h2>
 
-        <label>
-          Fecha
           <input
-            type="date"
-            value={date}
-            onChange={(e) =>
-              setDate(e.target.value)
-            }
+            placeholder="Título del bloque. Ej: Estadísticas esperadas"
+            value={blockTitle}
+            onChange={(e) => setBlockTitle(e.target.value)}
           />
-        </label>
 
-        <label>
-  Buscar equipo local
-  <input
-    placeholder="Ej: Argentina"
-    value={homeTeamSearch}
-    onChange={(e) =>
-      setHomeTeamSearch(e.target.value)
-    }
-    disabled={!competitionId}
-  />
-</label>
-
-<label>
-  Equipo local
-  <select
-    value={homeTeamId}
-    onChange={(e) =>
-      setHomeTeamId(e.target.value)
-    }
-    disabled={!competitionId}
-  >
-    <option value="">
-      Seleccionar equipo
-    </option>
-
-    {filteredHomeTeams.map((team) => (
-      <option
-        key={team._id}
-        value={team._id}
-      >
-        {team.name}
-      </option>
-    ))}
-  </select>
-</label>
-
-        {homeTeam?.logo && (
-          <img
-            src={homeTeam.logo}
-            alt={homeTeam.name}
-            className="competition-logo-preview"
-          />
-        )}
-
-<label>
-  Buscar equipo visitante
-  <input
-    placeholder="Ej: Brasil"
-    value={awayTeamSearch}
-    onChange={(e) =>
-      setAwayTeamSearch(e.target.value)
-    }
-    disabled={!competitionId}
-  />
-</label>
-
-<label>
-  Equipo visitante
-  <select
-    value={awayTeamId}
-    onChange={(e) =>
-      setAwayTeamId(e.target.value)
-    }
-    disabled={!competitionId}
-  >
-    <option value="">
-      Seleccionar equipo
-    </option>
-
-    {filteredAwayTeams.map((team) => (
-      <option
-        key={team._id}
-        value={team._id}
-      >
-        {team.name}
-      </option>
-    ))}
-  </select>
-</label>
-
-        {awayTeam?.logo && (
-          <img
-            src={awayTeam.logo}
-            alt={awayTeam.name}
-            className="competition-logo-preview"
-          />
-        )}
-
-        <h2>Probabilidades</h2>
-
-        <input
-          type="number"
-          min="0"
-          max="100"
-          value={homeProbability}
-          onChange={(e) =>
-            setHomeProbability(
-              Number(e.target.value)
-            )
-          }
-          placeholder="Probabilidad local"
-        />
-
-        <input
-          type="number"
-          min="0"
-          max="100"
-          value={drawProbability}
-          onChange={(e) =>
-            setDrawProbability(
-              Number(e.target.value)
-            )
-          }
-          placeholder="Probabilidad empate"
-        />
-
-        <input
-          type="number"
-          min="0"
-          max="100"
-          value={awayProbability}
-          onChange={(e) =>
-            setAwayProbability(
-              Number(e.target.value)
-            )
-          }
-          placeholder="Probabilidad visitante"
-        />
-
-        <p>
-          Total:{' '}
-          {homeProbability +
-            drawProbability +
-            awayProbability}
-          %
-        </p>
-
-        <h2>Bloques de datos</h2>
-
-        <input
-          placeholder="Título del bloque. Ej: Estadísticas esperadas"
-          value={blockTitle}
-          onChange={(e) =>
-            setBlockTitle(e.target.value)
-          }
-        />
-
-        <textarea
-          placeholder={`Pegá los datos así:
+          <textarea
+            placeholder={`Pegá los datos así:
 
 Goles: 2.8
 Tiros totales: 24
@@ -500,57 +464,46 @@ Corners: 9
 Tarjetas: 4
 Penales: 0.25
 Faltas: 24`}
-          value={blockText}
-          onChange={(e) =>
-            setBlockText(e.target.value)
-          }
-          rows={9}
-        />
+            value={blockText}
+            onChange={(e) => setBlockText(e.target.value)}
+            rows={9}
+          />
 
-        <button
-          type="button"
-          onClick={addBlock}
-        >
-          Agregar bloque
-        </button>
+          <button type="button" onClick={addBlock}>
+            Agregar bloque
+          </button>
 
-        <p>Bloques creados: {blocks.length}</p>
+          <p>Bloques creados: {blocks.length}</p>
 
-        {blocks.map((block, index) => (
-          <div
-            key={`${block.title}-${index}`}
-            className="section-preview"
-          >
-            <h3>{block.title}</h3>
-
-            {block.items.map((item, itemIndex) => (
-              <p key={`${item.label}-${itemIndex}`}>
-                {item.label}: {item.value}
-              </p>
-            ))}
-
-            <button
-              type="button"
-              onClick={() =>
-                setBlocks(
-                  blocks.filter(
-                    (_, i) => i !== index
-                  )
-                )
-              }
+          {blocks.map((block, index) => (
+            <div
+              key={`${block.title}-${index}`}
+              className="section-preview"
             >
-              Eliminar bloque
-            </button>
-          </div>
-        ))}
+              <h3>{block.title}</h3>
 
-        <button
-          type="submit"
-          disabled={saving}
-        >
-          {saving
-            ? 'Creando...'
-            : 'Crear predicción'}
+              {block.items.map((item, itemIndex) => (
+                <p key={`${item.label}-${itemIndex}`}>
+                  {item.label}: {item.value}
+                </p>
+              ))}
+
+              <button
+                type="button"
+                onClick={() =>
+                  setBlocks(
+                    blocks.filter((_, i) => i !== index)
+                  )
+                }
+              >
+                Eliminar bloque
+              </button>
+            </div>
+          ))}
+        </section>
+
+        <button type="submit" disabled={saving}>
+          {saving ? 'Creando...' : 'Crear predicción'}
         </button>
       </form>
     </div>
