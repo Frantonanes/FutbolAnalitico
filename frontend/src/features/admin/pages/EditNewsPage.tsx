@@ -18,6 +18,7 @@ import {
 } from '../../../services/contentService'
 
 import { getWriters } from '../../../services/writerService'
+import HashtagSelector from '../components/HashtagSelector'
 
 import { slugify } from '../../../shared/utils/slugify'
 import RichTextEditor from '../components/RichTextEditor'
@@ -89,7 +90,6 @@ export default function EditNewsPage() {
   const [saving, setSaving] = useState(false)
 
   const [imageHashtagSearch, setImageHashtagSearch] = useState('')
-  const [hashtagSearch, setHashtagSearch] = useState('')
   const [mediaSearch, setMediaSearch] = useState('')
   const [teamSearch, setTeamSearch] = useState('')
 
@@ -175,17 +175,6 @@ export default function EditNewsPage() {
     }
   }
 
-  function toggleHashtag(hashtag: string) {
-    if (selectedHashtags.includes(hashtag)) {
-      setSelectedHashtags(
-        selectedHashtags.filter((tag) => tag !== hashtag)
-      )
-      return
-    }
-
-    setSelectedHashtags([...selectedHashtags, hashtag])
-  }
-
   function addTeam() {
     if (!selectedTeam) return
 
@@ -268,12 +257,6 @@ export default function EditNewsPage() {
     hashtag.name
       .toLowerCase()
       .includes(imageHashtagSearch.toLowerCase())
-  )
-
-  const filteredHashtags = hashtagOptions.filter((hashtag) =>
-    hashtag.name
-      .toLowerCase()
-      .includes(hashtagSearch.toLowerCase())
   )
 
   const filteredMedia = mediaOptions.filter((media) =>
@@ -408,23 +391,11 @@ export default function EditNewsPage() {
 
         <h2>Hashtags</h2>
 
-        <input
-          placeholder="Buscar hashtag"
-          value={hashtagSearch}
-          onChange={(e) => setHashtagSearch(e.target.value)}
-        />
-
-        {filteredHashtags.map((hashtag) => (
-          <label key={hashtag._id}>
-            <input
-              type="checkbox"
-              checked={selectedHashtags.includes(hashtag.name)}
-              onChange={() => toggleHashtag(hashtag.name)}
-            />
-
-            #{hashtag.name}
-          </label>
-        ))}
+<HashtagSelector
+  options={hashtagOptions}
+  selected={selectedHashtags}
+  onChange={setSelectedHashtags}
+/>
 
         <h2>Equipos relacionados</h2>
 
