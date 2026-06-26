@@ -231,7 +231,7 @@
 }
 
 .news-detail__text {
-  max-width: 960px;
+  max-width: 1060px;
   margin: 0 auto 2rem;
   color: var(--text);
   font-size: 1.18rem;
