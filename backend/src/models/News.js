@@ -9,7 +9,7 @@ const NewsSchema = new mongoose.Schema(
 
     // LEGACY
     category: String,
-
+    content: String,
     image: String,
 
     hashtags: [String],

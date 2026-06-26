@@ -1,89 +1,71 @@
-const News = require('../models/News')
-require('../models/Writer')
+const mongoose = require('mongoose')
 
-exports.getNews = async (req, res) => {
-  try {
-    const news = await News.find()
-  .populate('authorId')
-  .sort({ createdAt: -1 })
-    res.json(news)
-} catch (error) {
-  console.error('Error obteniendo noticias:', error)
+const NewsSchema = new mongoose.Schema(
+  {
+    slug: String,
 
-  res.status(500).json({
-    message: error.message
-  })
-}
-}
+    title: String,
+    subtitle: String,
 
-exports.getNewsBySlug = async (req, res) => {
-  try {
-    const article = await News.findOne({
-  slug: req.params.slug
-}).populate('authorId')
+    content: String,
 
-    if (!article) {
-      return res.status(404).json({ message: 'Noticia no encontrada' })
-    }
+    // LEGACY
+    category: String,
 
-    res.json(article)
-  } catch (error) {
-    res.status(500).json(error)
+    image: String,
+
+    hashtags: [String],
+
+    competition: String,
+
+    teams: [String],
+
+    authorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Writer',
+      default: null
+    },
+
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category'
+    },
+
+    mediaIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Media'
+      }
+    ],
+
+    featuredMediaId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Media'
+    },
+
+    sections: [
+      {
+        type: {
+          type: String
+        },
+
+        content: String,
+
+        image: String,
+
+        mediaId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Media'
+        }
+      }
+    ]
+  },
+  {
+    timestamps: true
   }
-}
+)
 
-exports.createNews = async (req, res) => {
-  try {
-    const news = await News.create(req.body)
-    res.status(201).json(news)
-  } catch (error) {
-    res.status(500).json(error)
-  }
-}
-
-exports.updateNews = async (req, res) => {
-  try {
-    const news = await News.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    )
-
-    if (!news) {
-      return res.status(404).json({ message: 'Noticia no encontrada' })
-    }
-
-    res.json(news)
-  } catch (error) {
-    res.status(500).json(error)
-  }
-}
-
-exports.deleteNews = async (req, res) => {
-  try {
-    const news = await News.findByIdAndDelete(req.params.id)
-
-    if (!news) {
-      return res.status(404).json({ message: 'Noticia no encontrada' })
-    }
-
-    res.json({ message: 'Noticia eliminada' })
-  } catch (error) {
-    res.status(500).json(error)
-  }
-}
-exports.getNewsById = async (req, res) => {
-  try {
-    const article = await News.findById(
-  req.params.id
-).populate('authorId')
-
-    if (!article) {
-      return res.status(404).json({ message: 'Noticia no encontrada' })
-    }
-
-    res.json(article)
-  } catch (error) {
-    res.status(500).json(error)
-  }
-}
+module.exports = mongoose.model(
+  'News',
+  NewsSchema
+)
