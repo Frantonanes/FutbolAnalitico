@@ -198,7 +198,26 @@
 .admin-delete:hover {
   opacity: 0.9;
 }
+.admin-news-filters {
+  grid-template-columns:
+    minmax(220px, 1.2fr)
+    minmax(190px, 1fr)
+    minmax(170px, 0.8fr)
+    minmax(170px, 0.8fr)
+    auto;
+}
 
+@media (max-width: 1100px) {
+  .admin-news-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-news-filters {
+    grid-template-columns: 1fr;
+  }
+}
 @media (max-width: 920px) {
   .admin-news {
     padding: 1rem;
