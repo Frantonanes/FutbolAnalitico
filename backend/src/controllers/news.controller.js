@@ -1,71 +1,111 @@
-const mongoose = require('mongoose')
+const News = require('../models/News')
+require('../models/Writer')
 
-const NewsSchema = new mongoose.Schema(
-  {
-    slug: String,
+exports.getNews = async (req, res) => {
+  try {
+    const news = await News.find()
+      .populate('authorId')
+      .sort({ createdAt: -1 })
 
-    title: String,
-    subtitle: String,
-
-    content: String,
-
-    // LEGACY
-    category: String,
-
-    image: String,
-
-    hashtags: [String],
-
-    competition: String,
-
-    teams: [String],
-
-    authorId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Writer',
-      default: null
-    },
-
-    categoryId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Category'
-    },
-
-    mediaIds: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Media'
-      }
-    ],
-
-    featuredMediaId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Media'
-    },
-
-    sections: [
-      {
-        type: {
-          type: String
-        },
-
-        content: String,
-
-        image: String,
-
-        mediaId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'Media'
-        }
-      }
-    ]
-  },
-  {
-    timestamps: true
+    res.json(news)
+  } catch (error) {
+    console.error('Error obteniendo noticias:', error)
+    res.status(500).json({ message: error.message })
   }
-)
+}
 
-module.exports = mongoose.model(
-  'News',
-  NewsSchema
-)
+exports.getNewsBySlug = async (req, res) => {
+  try {
+    const article = await News.findOne({
+      slug: req.params.slug
+    }).populate('authorId')
+
+    if (!article) {
+      return res.status(404).json({
+        message: 'Noticia no encontrada'
+      })
+    }
+
+    res.json(article)
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    })
+  }
+}
+
+exports.createNews = async (req, res) => {
+  try {
+    const news = await News.create(req.body)
+
+    res.status(201).json(news)
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    })
+  }
+}
+
+exports.updateNews = async (req, res) => {
+  try {
+    const news = await News.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true
+      }
+    )
+
+    if (!news) {
+      return res.status(404).json({
+        message: 'Noticia no encontrada'
+      })
+    }
+
+    res.json(news)
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    })
+  }
+}
+
+exports.deleteNews = async (req, res) => {
+  try {
+    const news = await News.findByIdAndDelete(req.params.id)
+
+    if (!news) {
+      return res.status(404).json({
+        message: 'Noticia no encontrada'
+      })
+    }
+
+    res.json({
+      message: 'Noticia eliminada'
+    })
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    })
+  }
+}
+
+exports.getNewsById = async (req, res) => {
+  try {
+    const article = await News.findById(
+      req.params.id
+    ).populate('authorId')
+
+    if (!article) {
+      return res.status(404).json({
+        message: 'Noticia no encontrada'
+      })
+    }
+
+    res.json(article)
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    })
+  }
+}

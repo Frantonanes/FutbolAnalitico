@@ -7,21 +7,25 @@ const NewsSchema = new mongoose.Schema(
     title: String,
     subtitle: String,
 
+    content: String,
+
     // LEGACY
     category: String,
-    content: String,
+
     image: String,
 
     hashtags: [String],
-    
+
     competition: String,
 
     teams: [String],
+
     authorId: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: 'Writer',
-  default: null
-},
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Writer',
+      default: null
+    },
+
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Category'
@@ -61,7 +65,6 @@ const NewsSchema = new mongoose.Schema(
   }
 )
 
-module.exports = mongoose.model(
-  'News',
-  NewsSchema
-)
+module.exports =
+  mongoose.models.News ||
+  mongoose.model('News', NewsSchema)
