@@ -251,11 +251,11 @@ export default function CreateNewsPage() {
         </label>
 
         <MediaSelector
-          label="Imagen principal"
-          value={image}
-          mediaOptions={mediaOptions}
-          onChange={setImage}
-        />
+  label="Imagen principal"
+  value={image}
+  mediaOptions={mediaOptions}
+  onChange={setImage}
+/>
 
         <section className="admin-form__editor-section">
           <h2>Contenido de la noticia</h2>

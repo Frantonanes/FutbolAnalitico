@@ -291,10 +291,11 @@ export default function EditNewsPage() {
           <h2>Imagen principal</h2>
 
           <MediaSelector
-            value={image}
-            onChange={setImage}
-            mediaOptions={mediaOptions}
-          />
+  label="Imagen principal"
+  value={image}
+  mediaOptions={mediaOptions}
+  onChange={setImage}
+/>
         </section>
 
         <section className="admin-form__section admin-form__editor-section">
