@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { useParams } from 'react-router-dom'
 
 import NewsCard from '../../home/Featured/NewsCard'
@@ -12,10 +13,11 @@ import type { Prediction } from '../../../shared/types/Prediction'
 
 import './CategoryPage.css'
 
-function normalize(text: string = '') {
-  return text
+function normalize(text: unknown = '') {
+  return String(text || '')
     .toLowerCase()
     .trim()
+    .replace(/#/g, '')
     .replaceAll(' ', '-')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -28,50 +30,69 @@ function formatTitle(text: string = '') {
 }
 
 export default function CategoryPage() {
-  const { category } = useParams()
+  const { category = '' } = useParams()
 
   const [news, setNews] = useState<News[]>([])
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const [loading, setLoading] = useState(true)
 
+  const normalizedCategory = useMemo(
+    () => normalize(category),
+    [category]
+  )
+
+  const title = useMemo(
+    () => formatTitle(category),
+    [category]
+  )
+
   useEffect(() => {
+    const controller = new AbortController()
+
     async function loadCategory() {
       try {
         setLoading(true)
 
         const [newsData, predictionsData] = await Promise.all([
-          getNews(),
-          getPredictions()
+          getNews(controller.signal),
+          getPredictions(controller.signal)
         ])
+
+        if (controller.signal.aborted) return
 
         setNews(
           newsData.filter((item: News) =>
-            normalize(item.category) === category ||
-            item.hashtags?.some((tag) => normalize(tag) === category) ||
-            item.teams?.some((team) => normalize(team) === category) ||
-            normalize(item.competition) === category
+            normalize(item.category) === normalizedCategory ||
+            item.hashtags?.some((tag) => normalize(tag) === normalizedCategory) ||
+            item.teams?.some((team) => normalize(team) === normalizedCategory) ||
+            normalize(item.competition) === normalizedCategory
           )
         )
 
         setPredictions(
           predictionsData.filter((item: Prediction) =>
-            normalize(item.competition) === category ||
-            normalize(item.homeTeam) === category ||
-            normalize(item.awayTeam) === category
+            normalize(item.competition) === normalizedCategory ||
+            normalize(item.homeTeam) === normalizedCategory ||
+            normalize(item.awayTeam) === normalizedCategory
           )
         )
       } catch (error) {
+        if (controller.signal.aborted) return
         console.error(error)
       } finally {
-        setLoading(false)
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
       }
     }
 
     loadCategory()
-  }, [category])
 
-  const title = formatTitle(category)
+    return () => controller.abort()
+  }, [normalizedCategory])
+
   const hasResults = news.length > 0 || predictions.length > 0
+  const totalResults = news.length + predictions.length
 
   if (loading) {
     return (
@@ -85,6 +106,14 @@ export default function CategoryPage() {
 
   return (
     <main className="category-page">
+      <Helmet>
+        <title>{title} | Fútbol Analítico</title>
+        <meta
+          name="description"
+          content={`Noticias, predicciones y análisis relacionados con ${title} en Fútbol Analítico.`}
+        />
+      </Helmet>
+
       <section className="category-page__hero">
         <span>Categoría</span>
 
@@ -95,7 +124,7 @@ export default function CategoryPage() {
         </p>
 
         <strong>
-          {news.length + predictions.length} contenidos encontrados
+          {totalResults} contenidos encontrados
         </strong>
       </section>
 
