@@ -5,7 +5,6 @@ import {
   getCategories,
   getHashtags,
   getMedia,
-  searchMedia,
   getTeams
 } from '../../../services/contentService'
 import { getWriters } from '../../../services/writerService'
@@ -14,6 +13,7 @@ import type { Writer } from '../../../services/writerService'
 import { slugify } from '../../../shared/utils/slugify'
 import RichTextEditor from '../components/RichTextEditor'
 import HashtagSelector from '../components/HashtagSelector'
+import MediaSelector from '../components/MediaSelector'
 
 import './AdminForm.css'
 
@@ -52,7 +52,6 @@ export default function CreateNewsPage() {
   const [subtitle, setSubtitle] = useState('')
   const [content, setContent] = useState('')
   const [category, setCategory] = useState('')
-  const [competition, setCompetition] = useState('')
   const [authorId, setAuthorId] = useState('')
   const [image, setImage] = useState('')
 
@@ -63,17 +62,13 @@ export default function CreateNewsPage() {
   const [writerOptions, setWriterOptions] = useState<Writer[]>([])
 
   const [selectedHashtags, setSelectedHashtags] = useState<string[]>([])
-  const [selectedImageHashtag, setSelectedImageHashtag] = useState('')
 
   const [teams, setTeams] = useState<string[]>([])
   const [selectedTeam, setSelectedTeam] = useState('')
+  const [teamSearch, setTeamSearch] = useState('')
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-
-  const [imageHashtagSearch, setImageHashtagSearch] = useState('')
-  const [mediaSearch, setMediaSearch] = useState('')
-  const [teamSearch, setTeamSearch] = useState('')
 
   useEffect(() => {
     loadContent()
@@ -107,24 +102,6 @@ export default function CreateNewsPage() {
       alert('Error cargando datos del formulario')
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function handleImageHashtagChange(hashtag: string) {
-    setSelectedImageHashtag(hashtag)
-
-    try {
-      if (!hashtag) {
-        const data = await getMedia()
-        setMediaOptions(data)
-        return
-      }
-
-      const data = await searchMedia(hashtag)
-      setMediaOptions(data)
-    } catch (error) {
-      console.error(error)
-      alert('Error buscando imágenes')
     }
   }
 
@@ -178,7 +155,6 @@ export default function CreateNewsPage() {
         subtitle,
         content,
         category,
-        competition,
         authorId,
         image,
         hashtags: selectedHashtags,
@@ -192,15 +168,11 @@ export default function CreateNewsPage() {
       setSubtitle('')
       setContent('')
       setCategory('')
-      setCompetition('')
       setAuthorId('')
       setImage('')
       setSelectedHashtags([])
-      setSelectedImageHashtag('')
       setTeams([])
       setSelectedTeam('')
-      setImageHashtagSearch('')
-      setMediaSearch('')
       setTeamSearch('')
 
       loadContent()
@@ -221,18 +193,6 @@ export default function CreateNewsPage() {
     )
   }
 
-  const filteredImageHashtags = hashtagOptions.filter((hashtag) =>
-    hashtag.name
-      .toLowerCase()
-      .includes(imageHashtagSearch.toLowerCase())
-  )
-
-  const filteredMedia = mediaOptions.filter((media) =>
-    `${media.name || ''} ${media.url} ${media.hashtags?.join(' ') || ''}`
-      .toLowerCase()
-      .includes(mediaSearch.toLowerCase())
-  )
-
   const filteredTeams = teamOptions.filter((team) =>
     team.name
       .toLowerCase()
@@ -240,10 +200,10 @@ export default function CreateNewsPage() {
   )
 
   return (
-    <div className="admin-form-page">
+    <div className="admin-form-page admin-form-page--wide">
       <h1>Crear noticia</h1>
 
-      <form onSubmit={handleSubmit} className="admin-form">
+      <form onSubmit={handleSubmit} className="admin-form admin-form--wide">
         <input
           placeholder="Título"
           value={title}
@@ -290,121 +250,74 @@ export default function CreateNewsPage() {
           </select>
         </label>
 
-        <input
-          placeholder="Competencia. Ej: Mundial, Champions"
-          value={competition}
-          onChange={(e) => setCompetition(e.target.value)}
+        <MediaSelector
+          label="Imagen principal"
+          value={image}
+          mediaOptions={mediaOptions}
+          onChange={setImage}
         />
 
-        <label>
-          Filtrar imágenes por hashtag
+        <section className="admin-form__editor-section">
+          <h2>Contenido de la noticia</h2>
+
+          <RichTextEditor
+            value={content}
+            onChange={setContent}
+            mediaOptions={mediaOptions}
+          />
+        </section>
+
+        <section className="admin-form__section">
+          <h2>Hashtags</h2>
+
+          <HashtagSelector
+            options={hashtagOptions}
+            selected={selectedHashtags}
+            onChange={setSelectedHashtags}
+          />
+        </section>
+
+        <section className="admin-form__section">
+          <h2>Equipos relacionados</h2>
 
           <input
-            placeholder="Buscar hashtag. Ej: argentina"
-            value={imageHashtagSearch}
-            onChange={(e) => setImageHashtagSearch(e.target.value)}
+            placeholder="Buscar equipo"
+            value={teamSearch}
+            onChange={(e) => setTeamSearch(e.target.value)}
           />
 
           <select
-            value={selectedImageHashtag}
-            onChange={(e) => handleImageHashtagChange(e.target.value)}
+            value={selectedTeam}
+            onChange={(e) => setSelectedTeam(e.target.value)}
           >
-            <option value="">Todas las imágenes</option>
+            <option value="">Seleccionar equipo</option>
 
-            {filteredImageHashtags.map((hashtag) => (
-              <option key={hashtag._id} value={hashtag.name}>
-                #{hashtag.name}
+            {filteredTeams.map((team) => (
+              <option key={team._id} value={team.name}>
+                {team.name}
               </option>
             ))}
           </select>
-        </label>
 
-        <label>
-          Imagen principal
+          <button type="button" onClick={addTeam}>
+            Agregar equipo
+          </button>
 
-          <input
-            placeholder="Buscar imagen por nombre, URL o hashtag"
-            value={mediaSearch}
-            onChange={(e) => setMediaSearch(e.target.value)}
-          />
+          {teams.map((team, index) => (
+            <p key={`${team}-${index}`}>
+              {team}
 
-          <select
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-          >
-            <option value="">Seleccionar imagen</option>
-
-            {filteredMedia.map((media) => (
-              <option key={media._id} value={media.url}>
-                {media.name || 'Sin nombre'}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {image && (
-          <img
-            src={image}
-            alt="Preview"
-            className="image-preview"
-          />
-        )}
-
-        <h2>Contenido de la noticia</h2>
-
-        <RichTextEditor
-          value={content}
-          onChange={setContent}
-          mediaOptions={filteredMedia}
-        />
-
-        <h2>Hashtags</h2>
-
-        <HashtagSelector
-          options={hashtagOptions}
-          selected={selectedHashtags}
-          onChange={setSelectedHashtags}
-        />
-
-        <h2>Equipos relacionados</h2>
-
-        <input
-          placeholder="Buscar equipo"
-          value={teamSearch}
-          onChange={(e) => setTeamSearch(e.target.value)}
-        />
-
-        <select
-          value={selectedTeam}
-          onChange={(e) => setSelectedTeam(e.target.value)}
-        >
-          <option value="">Seleccionar equipo</option>
-
-          {filteredTeams.map((team) => (
-            <option key={team._id} value={team.name}>
-              {team.name}
-            </option>
+              <button
+                type="button"
+                onClick={() =>
+                  setTeams(teams.filter((_, i) => i !== index))
+                }
+              >
+                Eliminar
+              </button>
+            </p>
           ))}
-        </select>
-
-        <button type="button" onClick={addTeam}>
-          Agregar equipo
-        </button>
-
-        {teams.map((team, index) => (
-          <p key={`${team}-${index}`}>
-            {team}
-
-            <button
-              type="button"
-              onClick={() =>
-                setTeams(teams.filter((_, i) => i !== index))
-              }
-            >
-              Eliminar
-            </button>
-          </p>
-        ))}
+        </section>
 
         <button type="submit" disabled={saving}>
           {saving ? 'Creando...' : 'Crear noticia'}

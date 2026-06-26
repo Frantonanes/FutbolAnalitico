@@ -53,9 +53,6 @@ export default function AdminLayout() {
   <Link to="/admin/hashtags">
     Hashtags
   </Link>
-    <Link to="/admin/hashtags">
-  Hashtags
-    </Link>
 
     <Link to="/admin/escritores">
       Escritores

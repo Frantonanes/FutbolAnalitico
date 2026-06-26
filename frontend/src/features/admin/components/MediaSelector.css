@@ -1,0 +1,123 @@
+.media-selector {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #d7dce3;
+  border-radius: 18px;
+}
+
+.media-selector__label {
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.media-selector__controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(240px, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.media-selector__search,
+.media-selector__select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.75rem 0.9rem;
+  color: #111827;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  font: inherit;
+  outline: none;
+}
+
+.media-selector__search:focus,
+.media-selector__select:focus {
+  border-color: #01c38e;
+  box-shadow: 0 0 0 3px rgba(1, 195, 142, 0.16);
+}
+
+.media-selector__preview {
+  display: grid;
+  grid-template-columns: 180px 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.75rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+}
+
+.media-selector__preview img {
+  width: 180px;
+  height: 105px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.media-selector__preview-info {
+  min-width: 0;
+}
+
+.media-selector__preview-info strong {
+  display: block;
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.media-selector__preview-info span {
+  display: block;
+  margin-top: 0.2rem;
+  color: #64748b;
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.media-selector__clear {
+  width: 38px;
+  height: 38px;
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.media-selector__clear:hover {
+  color: #ffffff;
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.media-selector__empty {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  color: #64748b;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 720px) {
+  .media-selector__controls,
+  .media-selector__preview {
+    grid-template-columns: 1fr;
+  }
+
+  .media-selector__preview img {
+    width: 100%;
+    height: 180px;
+  }
+
+  .media-selector__clear {
+    width: 100%;
+  }
+}
