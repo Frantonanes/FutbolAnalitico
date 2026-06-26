@@ -13,6 +13,7 @@ import { getWriters } from '../../../services/writerService'
 import type { Writer } from '../../../services/writerService'
 import { slugify } from '../../../shared/utils/slugify'
 import RichTextEditor from '../components/RichTextEditor'
+import HashtagSelector from '../components/HashtagSelector'
 
 import './AdminForm.css'
 
@@ -71,7 +72,6 @@ export default function CreateNewsPage() {
   const [saving, setSaving] = useState(false)
 
   const [imageHashtagSearch, setImageHashtagSearch] = useState('')
-  const [hashtagSearch, setHashtagSearch] = useState('')
   const [mediaSearch, setMediaSearch] = useState('')
   const [teamSearch, setTeamSearch] = useState('')
 
@@ -126,17 +126,6 @@ export default function CreateNewsPage() {
       console.error(error)
       alert('Error buscando imágenes')
     }
-  }
-
-  function toggleHashtag(hashtag: string) {
-    if (selectedHashtags.includes(hashtag)) {
-      setSelectedHashtags(
-        selectedHashtags.filter((tag) => tag !== hashtag)
-      )
-      return
-    }
-
-    setSelectedHashtags([...selectedHashtags, hashtag])
   }
 
   function addTeam() {
@@ -211,7 +200,6 @@ export default function CreateNewsPage() {
       setTeams([])
       setSelectedTeam('')
       setImageHashtagSearch('')
-      setHashtagSearch('')
       setMediaSearch('')
       setTeamSearch('')
 
@@ -237,12 +225,6 @@ export default function CreateNewsPage() {
     hashtag.name
       .toLowerCase()
       .includes(imageHashtagSearch.toLowerCase())
-  )
-
-  const filteredHashtags = hashtagOptions.filter((hashtag) =>
-    hashtag.name
-      .toLowerCase()
-      .includes(hashtagSearch.toLowerCase())
   )
 
   const filteredMedia = mediaOptions.filter((media) =>
@@ -378,23 +360,11 @@ export default function CreateNewsPage() {
 
         <h2>Hashtags</h2>
 
-        <input
-          placeholder="Buscar hashtag"
-          value={hashtagSearch}
-          onChange={(e) => setHashtagSearch(e.target.value)}
+        <HashtagSelector
+          options={hashtagOptions}
+          selected={selectedHashtags}
+          onChange={setSelectedHashtags}
         />
-
-        {filteredHashtags.map((hashtag) => (
-          <label key={hashtag._id}>
-            <input
-              type="checkbox"
-              checked={selectedHashtags.includes(hashtag.name)}
-              onChange={() => toggleHashtag(hashtag.name)}
-            />
-
-            #{hashtag.name}
-          </label>
-        ))}
 
         <h2>Equipos relacionados</h2>
 
