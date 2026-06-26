@@ -48,7 +48,11 @@ function RichImageNode({ node, selected, deleteNode }: NodeViewProps) {
       <button
         type="button"
         className="rich-editor-image__remove"
-        onClick={deleteNode}
+        onMouseDown={(e) => e.preventDefault()}
+onClick={(e) => {
+  e.stopPropagation()
+  deleteNode()
+}}
         aria-label="Eliminar imagen"
         title="Eliminar imagen"
       >
