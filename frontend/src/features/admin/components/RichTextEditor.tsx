@@ -143,12 +143,15 @@ export default function RichTextEditor({
   })
 
   useEffect(() => {
-    if (!editor) return
-    if (value === lastValueRef.current) return
+  if (!editor) return
+  if (value === lastValueRef.current) return
 
-    lastValueRef.current = value || ''
-    editor.commands.setContent(value || '', false)
-  }, [editor, value])
+  lastValueRef.current = value || ''
+
+  editor.commands.setContent(value || '', {
+    emitUpdate: false
+  })
+}, [editor, value])
 
   if (!editor) return null
 
