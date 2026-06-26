@@ -169,3 +169,158 @@
 .admin-form__editor-section {
   margin: 0.5rem 0;
 }
+
+.admin-form-page--wide {
+  width: 100%;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.admin-form-page--wide h1 {
+  margin: 0 0 1.5rem;
+  color: #f8fafc;
+  font-size: clamp(2rem, 3vw, 3rem);
+  letter-spacing: -0.04em;
+}
+
+.admin-form--wide {
+  width: 100%;
+  max-width: none;
+  gap: 1.4rem;
+  padding: 1.4rem;
+  background: #f8fafc;
+  border: 1px solid #dbe3ee;
+  border-radius: 22px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.18);
+}
+
+.admin-form--wide .admin-form__section {
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+}
+
+.admin-form--wide .admin-form__section:first-child {
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+}
+
+.admin-form--wide .admin-form__section h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.admin-form--wide label {
+  color: #334155;
+  font-weight: 800;
+}
+
+.admin-form--wide input,
+.admin-form--wide textarea,
+.admin-form--wide select {
+  min-height: 46px;
+  color: #0f172a;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+}
+
+.admin-form--wide input:focus,
+.admin-form--wide textarea:focus,
+.admin-form--wide select:focus {
+  border-color: #01c38e;
+  box-shadow: 0 0 0 3px rgba(1, 195, 142, 0.14);
+}
+
+.admin-form__editor-section {
+  padding: 0 !important;
+  overflow: hidden;
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.admin-form__editor-section h2 {
+  padding: 0 0.25rem;
+}
+
+.admin-form__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.admin-form__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+  padding: 0.45rem 0.7rem;
+  color: #0f172a;
+  background: #e8fff7;
+  border: 1px solid rgba(1, 195, 142, 0.3);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.admin-form__chip button {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: #0f172a;
+  background: rgba(1, 195, 142, 0.16);
+  border: 0;
+  border-radius: 999px;
+}
+
+/* Evita que el CSS viejo del form pise los botones del RichTextEditor */
+.admin-form--wide .rich-editor button {
+  align-self: auto;
+  transform: none;
+}
+
+.admin-form--wide .rich-editor button:hover {
+  opacity: 1;
+}
+
+.admin-form--wide > button[type="submit"] {
+  align-self: flex-end;
+  min-width: 190px;
+  padding: 1rem 1.4rem;
+  background: #01c38e;
+  color: #ffffff;
+  border-radius: 12px;
+  font-weight: 900;
+}
+
+.admin-form--wide > button[type="submit"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+@media (max-width: 820px) {
+  .admin-form-page--wide {
+    padding: 1rem;
+  }
+
+  .admin-form--wide {
+    padding: 1rem;
+    border-radius: 18px;
+  }
+
+  .admin-form--wide .admin-form__section:first-child {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-form--wide > button[type="submit"] {
+    width: 100%;
+  }
+}
