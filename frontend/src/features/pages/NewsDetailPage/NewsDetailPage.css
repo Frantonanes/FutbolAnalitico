@@ -226,22 +226,22 @@
 }
 
 .news-detail__content {
-  max-width: 980px;
+  max-width: 1120px;
   margin: 0 auto;
 }
 
 .news-detail__text {
-  max-width: 780px;
+  max-width: 960px;
   margin: 0 auto 2rem;
   color: var(--text);
-  font-size: 1.16rem;
+  font-size: 1.18rem;
   line-height: 1.95;
   white-space: pre-line;
 }
 
 .news-detail__rich-content {
   color: var(--text);
-  font-size: 1.16rem;
+  font-size: 1.18rem;
   line-height: 1.95;
 }
 
