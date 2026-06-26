@@ -20,7 +20,7 @@ import {
 import { getWriters } from '../../../services/writerService'
 
 import { slugify } from '../../../shared/utils/slugify'
-import type { NewsSection } from '../../../shared/types/News'
+import RichTextEditor from '../components/RichTextEditor'
 
 import './AdminForm.css'
 
@@ -54,49 +54,48 @@ type Writer = {
   image?: string
 }
 
+function isRichContentEmpty(content: string) {
+  return content
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, '')
+    .trim().length === 0
+}
+
 export default function EditNewsPage() {
   const { id } = useParams()
   const navigate = useNavigate()
 
   const [title, setTitle] = useState('')
   const [subtitle, setSubtitle] = useState('')
+  const [content, setContent] = useState('')
   const [category, setCategory] = useState('')
   const [competition, setCompetition] = useState('')
   const [image, setImage] = useState('')
   const [authorId, setAuthorId] = useState('')
 
   const [categories, setCategories] = useState<Category[]>([])
-  const [hashtagOptions, setHashtagOptions] =
-    useState<Hashtag[]>([])
-  const [mediaOptions, setMediaOptions] =
-    useState<Media[]>([])
-  const [teamOptions, setTeamOptions] =
-    useState<Team[]>([])
-  const [writerOptions, setWriterOptions] =
-    useState<Writer[]>([])
+  const [hashtagOptions, setHashtagOptions] = useState<Hashtag[]>([])
+  const [mediaOptions, setMediaOptions] = useState<Media[]>([])
+  const [teamOptions, setTeamOptions] = useState<Team[]>([])
+  const [writerOptions, setWriterOptions] = useState<Writer[]>([])
 
-  const [selectedHashtags, setSelectedHashtags] =
-    useState<string[]>([])
-  const [selectedImageHashtag, setSelectedImageHashtag] =
-    useState('')
+  const [selectedHashtags, setSelectedHashtags] = useState<string[]>([])
+  const [selectedImageHashtag, setSelectedImageHashtag] = useState('')
 
   const [teams, setTeams] = useState<string[]>([])
   const [selectedTeam, setSelectedTeam] = useState('')
 
-  const [sections, setSections] =
-    useState<NewsSection[]>([])
-  const [sectionType, setSectionType] =
-    useState<NewsSection['type']>('text')
-  const [sectionContent, setSectionContent] =
-    useState('')
-  const [sectionImage, setSectionImage] =
-    useState('')
-
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
+  const [imageHashtagSearch, setImageHashtagSearch] = useState('')
+  const [hashtagSearch, setHashtagSearch] = useState('')
+  const [mediaSearch, setMediaSearch] = useState('')
+  const [teamSearch, setTeamSearch] = useState('')
+
   useEffect(() => {
     if (!id) return
+
     const articleId = id
     const controller = new AbortController()
 
@@ -124,12 +123,12 @@ export default function EditNewsPage() {
 
         setTitle(article.title || '')
         setSubtitle(article.subtitle || '')
+        setContent(article.content || '')
         setCategory(article.category || '')
         setCompetition(article.competition || '')
         setImage(article.image || '')
         setSelectedHashtags(article.hashtags || [])
         setTeams(article.teams || [])
-        setSections(article.sections || [])
 
         if (typeof article.authorId === 'string') {
           setAuthorId(article.authorId)
@@ -158,9 +157,7 @@ export default function EditNewsPage() {
     return () => controller.abort()
   }, [id])
 
-  async function handleImageHashtagChange(
-    hashtag: string
-  ) {
+  async function handleImageHashtagChange(hashtag: string) {
     setSelectedImageHashtag(hashtag)
 
     try {
@@ -181,17 +178,12 @@ export default function EditNewsPage() {
   function toggleHashtag(hashtag: string) {
     if (selectedHashtags.includes(hashtag)) {
       setSelectedHashtags(
-        selectedHashtags.filter(
-          (tag) => tag !== hashtag
-        )
+        selectedHashtags.filter((tag) => tag !== hashtag)
       )
       return
     }
 
-    setSelectedHashtags([
-      ...selectedHashtags,
-      hashtag
-    ])
+    setSelectedHashtags([...selectedHashtags, hashtag])
   }
 
   function addTeam() {
@@ -204,52 +196,10 @@ export default function EditNewsPage() {
 
     setTeams([...teams, selectedTeam])
     setSelectedTeam('')
+    setTeamSearch('')
   }
 
-  function addSection() {
-    if (
-      sectionType === 'text' &&
-      !sectionContent.trim()
-    ) {
-      alert('Agregá contenido al bloque')
-      return
-    }
-
-    if (
-      sectionType !== 'text' &&
-      !sectionImage
-    ) {
-      alert('Seleccioná una imagen para el bloque')
-      return
-    }
-
-    if (sectionType === 'image-full') {
-      setSections([
-        ...sections,
-        {
-          type: 'image-full',
-          image: sectionImage
-        }
-      ])
-    } else {
-      setSections([
-        ...sections,
-        {
-          type: sectionType,
-          content: sectionContent,
-          image: sectionImage
-        }
-      ])
-    }
-
-    setSectionType('text')
-    setSectionContent('')
-    setSectionImage('')
-  }
-
-  async function handleSubmit(
-    e: React.FormEvent
-  ) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
     if (!id) return
@@ -274,6 +224,11 @@ export default function EditNewsPage() {
       return
     }
 
+    if (isRichContentEmpty(content)) {
+      alert('Escribí el contenido de la noticia')
+      return
+    }
+
     try {
       setSaving(true)
 
@@ -281,13 +236,13 @@ export default function EditNewsPage() {
         slug: slugify(title),
         title: title.trim(),
         subtitle,
+        content,
         category,
         competition,
         image,
         authorId,
         hashtags: selectedHashtags,
-        teams,
-        sections
+        teams
       })
 
       alert('Noticia actualizada')
@@ -309,47 +264,57 @@ export default function EditNewsPage() {
     )
   }
 
+  const filteredImageHashtags = hashtagOptions.filter((hashtag) =>
+    hashtag.name
+      .toLowerCase()
+      .includes(imageHashtagSearch.toLowerCase())
+  )
+
+  const filteredHashtags = hashtagOptions.filter((hashtag) =>
+    hashtag.name
+      .toLowerCase()
+      .includes(hashtagSearch.toLowerCase())
+  )
+
+  const filteredMedia = mediaOptions.filter((media) =>
+    `${media.name || ''} ${media.url} ${media.hashtags?.join(' ') || ''}`
+      .toLowerCase()
+      .includes(mediaSearch.toLowerCase())
+  )
+
+  const filteredTeams = teamOptions.filter((team) =>
+    team.name
+      .toLowerCase()
+      .includes(teamSearch.toLowerCase())
+  )
+
   return (
     <div className="admin-form-page">
       <h1>Editar noticia</h1>
 
-      <form
-        onSubmit={handleSubmit}
-        className="admin-form"
-      >
+      <form onSubmit={handleSubmit} className="admin-form">
         <input
           placeholder="Título"
           value={title}
-          onChange={(e) =>
-            setTitle(e.target.value)
-          }
+          onChange={(e) => setTitle(e.target.value)}
         />
 
         <input
           placeholder="Subtítulo"
           value={subtitle}
-          onChange={(e) =>
-            setSubtitle(e.target.value)
-          }
+          onChange={(e) => setSubtitle(e.target.value)}
         />
 
         <label>
           Escritor
           <select
             value={authorId}
-            onChange={(e) =>
-              setAuthorId(e.target.value)
-            }
+            onChange={(e) => setAuthorId(e.target.value)}
           >
-            <option value="">
-              Seleccionar escritor
-            </option>
+            <option value="">Seleccionar escritor</option>
 
             {writerOptions.map((writer) => (
-              <option
-                key={writer._id}
-                value={writer._id}
-              >
+              <option key={writer._id} value={writer._id}>
                 {writer.name}
                 {writer.role ? ` · ${writer.role}` : ''}
               </option>
@@ -361,19 +326,12 @@ export default function EditNewsPage() {
           Categoría
           <select
             value={category}
-            onChange={(e) =>
-              setCategory(e.target.value)
-            }
+            onChange={(e) => setCategory(e.target.value)}
           >
-            <option value="">
-              Seleccionar categoría
-            </option>
+            <option value="">Seleccionar categoría</option>
 
             {categories.map((cat) => (
-              <option
-                key={cat._id}
-                value={cat.name}
-              >
+              <option key={cat._id} value={cat.name}>
                 {cat.name}
               </option>
             ))}
@@ -383,30 +341,26 @@ export default function EditNewsPage() {
         <input
           placeholder="Competencia. Ej: Mundial, Champions"
           value={competition}
-          onChange={(e) =>
-            setCompetition(e.target.value)
-          }
+          onChange={(e) => setCompetition(e.target.value)}
         />
 
         <label>
           Filtrar imágenes por hashtag
+
+          <input
+            placeholder="Buscar hashtag. Ej: argentina"
+            value={imageHashtagSearch}
+            onChange={(e) => setImageHashtagSearch(e.target.value)}
+          />
+
           <select
             value={selectedImageHashtag}
-            onChange={(e) =>
-              handleImageHashtagChange(
-                e.target.value
-              )
-            }
+            onChange={(e) => handleImageHashtagChange(e.target.value)}
           >
-            <option value="">
-              Todas las imágenes
-            </option>
+            <option value="">Todas las imágenes</option>
 
-            {hashtagOptions.map((hashtag) => (
-              <option
-                key={hashtag._id}
-                value={hashtag.name}
-              >
+            {filteredImageHashtags.map((hashtag) => (
+              <option key={hashtag._id} value={hashtag.name}>
                 #{hashtag.name}
               </option>
             ))}
@@ -415,21 +369,21 @@ export default function EditNewsPage() {
 
         <label>
           Imagen principal
+
+          <input
+            placeholder="Buscar imagen por nombre, URL o hashtag"
+            value={mediaSearch}
+            onChange={(e) => setMediaSearch(e.target.value)}
+          />
+
           <select
             value={image}
-            onChange={(e) =>
-              setImage(e.target.value)
-            }
+            onChange={(e) => setImage(e.target.value)}
           >
-            <option value="">
-              Seleccionar imagen
-            </option>
+            <option value="">Seleccionar imagen</option>
 
-            {mediaOptions.map((media) => (
-              <option
-                key={media._id}
-                value={media.url}
-              >
+            {filteredMedia.map((media) => (
+              <option key={media._id} value={media.url}>
                 {media.name || 'Sin nombre'}
               </option>
             ))}
@@ -444,49 +398,56 @@ export default function EditNewsPage() {
           />
         )}
 
+        <h2>Contenido de la noticia</h2>
+
+        <RichTextEditor
+          value={content}
+          onChange={setContent}
+          mediaOptions={filteredMedia}
+        />
+
         <h2>Hashtags</h2>
 
-        {hashtagOptions.map((hashtag) => (
+        <input
+          placeholder="Buscar hashtag"
+          value={hashtagSearch}
+          onChange={(e) => setHashtagSearch(e.target.value)}
+        />
+
+        {filteredHashtags.map((hashtag) => (
           <label key={hashtag._id}>
             <input
               type="checkbox"
-              checked={selectedHashtags.includes(
-                hashtag.name
-              )}
-              onChange={() =>
-                toggleHashtag(hashtag.name)
-              }
+              checked={selectedHashtags.includes(hashtag.name)}
+              onChange={() => toggleHashtag(hashtag.name)}
             />
+
             #{hashtag.name}
           </label>
         ))}
 
         <h2>Equipos relacionados</h2>
 
+        <input
+          placeholder="Buscar equipo"
+          value={teamSearch}
+          onChange={(e) => setTeamSearch(e.target.value)}
+        />
+
         <select
           value={selectedTeam}
-          onChange={(e) =>
-            setSelectedTeam(e.target.value)
-          }
+          onChange={(e) => setSelectedTeam(e.target.value)}
         >
-          <option value="">
-            Seleccionar equipo
-          </option>
+          <option value="">Seleccionar equipo</option>
 
-          {teamOptions.map((team) => (
-            <option
-              key={team._id}
-              value={team.name}
-            >
+          {filteredTeams.map((team) => (
+            <option key={team._id} value={team.name}>
               {team.name}
             </option>
           ))}
         </select>
 
-        <button
-          type="button"
-          onClick={addTeam}
-        >
+        <button type="button" onClick={addTeam}>
           Agregar equipo
         </button>
 
@@ -497,11 +458,7 @@ export default function EditNewsPage() {
             <button
               type="button"
               onClick={() =>
-                setTeams(
-                  teams.filter(
-                    (_, i) => i !== index
-                  )
-                )
+                setTeams(teams.filter((_, i) => i !== index))
               }
             >
               Eliminar
@@ -509,121 +466,8 @@ export default function EditNewsPage() {
           </p>
         ))}
 
-        <h2>Secciones de la noticia</h2>
-
-        <select
-          value={sectionType}
-          onChange={(e) =>
-            setSectionType(
-              e.target.value as NewsSection['type']
-            )
-          }
-        >
-          <option value="text">Texto</option>
-          <option value="image-left">
-            Imagen izquierda
-          </option>
-          <option value="image-right">
-            Imagen derecha
-          </option>
-          <option value="image-full">
-            Imagen completa
-          </option>
-        </select>
-
-        {sectionType !== 'image-full' && (
-          <textarea
-            placeholder="Contenido de la sección"
-            value={sectionContent}
-            onChange={(e) =>
-              setSectionContent(e.target.value)
-            }
-            rows={6}
-          />
-        )}
-
-        {sectionType !== 'text' && (
-          <>
-            <select
-              value={sectionImage}
-              onChange={(e) =>
-                setSectionImage(e.target.value)
-              }
-            >
-              <option value="">
-                Seleccionar imagen de sección
-              </option>
-
-              {mediaOptions.map((media) => (
-                <option
-                  key={media._id}
-                  value={media.url}
-                >
-                  {media.name || 'Sin nombre'}
-                </option>
-              ))}
-            </select>
-
-            {sectionImage && (
-              <img
-                src={sectionImage}
-                alt=""
-                className="section-image-preview"
-              />
-            )}
-          </>
-        )}
-
-        <button
-          type="button"
-          onClick={addSection}
-        >
-          Agregar sección
-        </button>
-
-        <p>Secciones creadas: {sections.length}</p>
-
-        {sections.map((section, index) => (
-          <div
-            key={index}
-            className="section-preview"
-          >
-            <strong>{section.type}</strong>
-
-            {'content' in section && (
-              <p>{section.content}</p>
-            )}
-
-            {'image' in section &&
-              section.image && (
-                <img
-                  src={section.image}
-                  alt=""
-                  className="section-image-preview"
-                />
-              )}
-
-            <button
-              type="button"
-              onClick={() =>
-                setSections(
-                  sections.filter(
-                    (_, i) => i !== index
-                  )
-                )
-              }
-            >
-              Eliminar sección
-            </button>
-          </div>
-        ))}
-
-        <button
-          type="submit" disabled={saving}
-        >
-          {saving
-            ? 'Guardando...'
-            : 'Guardar cambios'}
+        <button type="submit" disabled={saving}>
+          {saving ? 'Guardando...' : 'Guardar cambios'}
         </button>
       </form>
     </div>

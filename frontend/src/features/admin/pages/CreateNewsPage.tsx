@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+
 import { createNews } from '../../../services/newsService'
 import {
   getCategories,
@@ -7,15 +8,13 @@ import {
   searchMedia,
   getTeams
 } from '../../../services/contentService'
-import './AdminForm.css'
+import { getWriters } from '../../../services/writerService'
+
+import type { Writer } from '../../../services/writerService'
 import { slugify } from '../../../shared/utils/slugify'
-import type { NewsSection } from '../../../shared/types/News'
-import {
-  getWriters
-} from '../../../services/writerService'
-import type {
-  Writer
-} from '../../../services/writerService'
+import RichTextEditor from '../components/RichTextEditor'
+
+import './AdminForm.css'
 
 type Category = {
   _id: string
@@ -40,12 +39,21 @@ type Team = {
   logo?: string
 }
 
+function isRichContentEmpty(content: string) {
+  return content
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, '')
+    .trim().length === 0
+}
+
 export default function CreateNewsPage() {
   const [title, setTitle] = useState('')
   const [subtitle, setSubtitle] = useState('')
+  const [content, setContent] = useState('')
   const [category, setCategory] = useState('')
   const [competition, setCompetition] = useState('')
   const [authorId, setAuthorId] = useState('')
+  const [image, setImage] = useState('')
 
   const [categories, setCategories] = useState<Category[]>([])
   const [hashtagOptions, setHashtagOptions] = useState<Hashtag[]>([])
@@ -56,16 +64,8 @@ export default function CreateNewsPage() {
   const [selectedHashtags, setSelectedHashtags] = useState<string[]>([])
   const [selectedImageHashtag, setSelectedImageHashtag] = useState('')
 
-  const [image, setImage] = useState('')
-
   const [teams, setTeams] = useState<string[]>([])
   const [selectedTeam, setSelectedTeam] = useState('')
-
-  const [sections, setSections] = useState<NewsSection[]>([])
-  const [sectionType, setSectionType] =
-    useState<NewsSection['type']>('text')
-  const [sectionContent, setSectionContent] = useState('')
-  const [sectionImage, setSectionImage] = useState('')
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -131,17 +131,12 @@ export default function CreateNewsPage() {
   function toggleHashtag(hashtag: string) {
     if (selectedHashtags.includes(hashtag)) {
       setSelectedHashtags(
-        selectedHashtags.filter(
-          (tag) => tag !== hashtag
-        )
+        selectedHashtags.filter((tag) => tag !== hashtag)
       )
       return
     }
 
-    setSelectedHashtags([
-      ...selectedHashtags,
-      hashtag
-    ])
+    setSelectedHashtags([...selectedHashtags, hashtag])
   }
 
   function addTeam() {
@@ -155,47 +150,6 @@ export default function CreateNewsPage() {
     setTeams([...teams, selectedTeam])
     setSelectedTeam('')
     setTeamSearch('')
-  }
-
-  function addSection() {
-    if (
-      sectionType === 'text' &&
-      !sectionContent.trim()
-    ) {
-      alert('Agregá contenido al bloque')
-      return
-    }
-
-    if (
-      sectionType !== 'text' &&
-      !sectionImage
-    ) {
-      alert('Seleccioná una imagen para el bloque')
-      return
-    }
-
-    if (sectionType === 'image-full') {
-      setSections([
-        ...sections,
-        {
-          type: 'image-full',
-          image: sectionImage
-        }
-      ])
-    } else {
-      setSections([
-        ...sections,
-        {
-          type: sectionType,
-          content: sectionContent,
-          image: sectionImage
-        }
-      ])
-    }
-
-    setSectionType('text')
-    setSectionContent('')
-    setSectionImage('')
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -221,6 +175,11 @@ export default function CreateNewsPage() {
       return
     }
 
+    if (isRichContentEmpty(content)) {
+      alert('Escribí el contenido de la noticia')
+      return
+    }
+
     try {
       setSaving(true)
 
@@ -228,19 +187,21 @@ export default function CreateNewsPage() {
         slug: slugify(title),
         title: title.trim(),
         subtitle,
+        content,
         category,
         competition,
         authorId,
         image,
         hashtags: selectedHashtags,
         teams,
-        sections
+        sections: []
       })
 
       alert('Noticia creada')
 
       setTitle('')
       setSubtitle('')
+      setContent('')
       setCategory('')
       setCompetition('')
       setAuthorId('')
@@ -249,10 +210,6 @@ export default function CreateNewsPage() {
       setSelectedImageHashtag('')
       setTeams([])
       setSelectedTeam('')
-      setSections([])
-      setSectionType('text')
-      setSectionContent('')
-      setSectionImage('')
       setImageHashtagSearch('')
       setHashtagSearch('')
       setMediaSearch('')
@@ -304,48 +261,32 @@ export default function CreateNewsPage() {
     <div className="admin-form-page">
       <h1>Crear noticia</h1>
 
-      <form
-        onSubmit={handleSubmit}
-        className="admin-form"
-      >
+      <form onSubmit={handleSubmit} className="admin-form">
         <input
           placeholder="Título"
           value={title}
-          onChange={(e) =>
-            setTitle(e.target.value)
-          }
+          onChange={(e) => setTitle(e.target.value)}
         />
 
         <input
           placeholder="Subtítulo"
           value={subtitle}
-          onChange={(e) =>
-            setSubtitle(e.target.value)
-          }
+          onChange={(e) => setSubtitle(e.target.value)}
         />
 
         <label>
           Escritor
           <select
             value={authorId}
-            onChange={(e) =>
-              setAuthorId(e.target.value)
-            }
+            onChange={(e) => setAuthorId(e.target.value)}
             required
           >
-            <option value="">
-              Seleccionar escritor
-            </option>
+            <option value="">Seleccionar escritor</option>
 
             {writerOptions.map((writer) => (
-              <option
-                key={writer._id}
-                value={writer._id}
-              >
+              <option key={writer._id} value={writer._id}>
                 {writer.name}
-                {writer.role
-                  ? ` · ${writer.role}`
-                  : ''}
+                {writer.role ? ` · ${writer.role}` : ''}
               </option>
             ))}
           </select>
@@ -355,19 +296,12 @@ export default function CreateNewsPage() {
           Categoría
           <select
             value={category}
-            onChange={(e) =>
-              setCategory(e.target.value)
-            }
+            onChange={(e) => setCategory(e.target.value)}
           >
-            <option value="">
-              Seleccionar categoría
-            </option>
+            <option value="">Seleccionar categoría</option>
 
             {categories.map((cat) => (
-              <option
-                key={cat._id}
-                value={cat.name}
-              >
+              <option key={cat._id} value={cat.name}>
                 {cat.name}
               </option>
             ))}
@@ -377,9 +311,7 @@ export default function CreateNewsPage() {
         <input
           placeholder="Competencia. Ej: Mundial, Champions"
           value={competition}
-          onChange={(e) =>
-            setCompetition(e.target.value)
-          }
+          onChange={(e) => setCompetition(e.target.value)}
         />
 
         <label>
@@ -388,28 +320,17 @@ export default function CreateNewsPage() {
           <input
             placeholder="Buscar hashtag. Ej: argentina"
             value={imageHashtagSearch}
-            onChange={(e) =>
-              setImageHashtagSearch(e.target.value)
-            }
+            onChange={(e) => setImageHashtagSearch(e.target.value)}
           />
 
           <select
             value={selectedImageHashtag}
-            onChange={(e) =>
-              handleImageHashtagChange(
-                e.target.value
-              )
-            }
+            onChange={(e) => handleImageHashtagChange(e.target.value)}
           >
-            <option value="">
-              Todas las imágenes
-            </option>
+            <option value="">Todas las imágenes</option>
 
             {filteredImageHashtags.map((hashtag) => (
-              <option
-                key={hashtag._id}
-                value={hashtag.name}
-              >
+              <option key={hashtag._id} value={hashtag.name}>
                 #{hashtag.name}
               </option>
             ))}
@@ -422,26 +343,17 @@ export default function CreateNewsPage() {
           <input
             placeholder="Buscar imagen por nombre, URL o hashtag"
             value={mediaSearch}
-            onChange={(e) =>
-              setMediaSearch(e.target.value)
-            }
+            onChange={(e) => setMediaSearch(e.target.value)}
           />
 
           <select
             value={image}
-            onChange={(e) =>
-              setImage(e.target.value)
-            }
+            onChange={(e) => setImage(e.target.value)}
           >
-            <option value="">
-              Seleccionar imagen
-            </option>
+            <option value="">Seleccionar imagen</option>
 
             {filteredMedia.map((media) => (
-              <option
-                key={media._id}
-                value={media.url}
-              >
+              <option key={media._id} value={media.url}>
                 {media.name || 'Sin nombre'}
               </option>
             ))}
@@ -456,27 +368,30 @@ export default function CreateNewsPage() {
           />
         )}
 
+        <h2>Contenido de la noticia</h2>
+
+        <RichTextEditor
+          value={content}
+          onChange={setContent}
+          mediaOptions={filteredMedia}
+        />
+
         <h2>Hashtags</h2>
 
         <input
           placeholder="Buscar hashtag"
           value={hashtagSearch}
-          onChange={(e) =>
-            setHashtagSearch(e.target.value)
-          }
+          onChange={(e) => setHashtagSearch(e.target.value)}
         />
 
         {filteredHashtags.map((hashtag) => (
           <label key={hashtag._id}>
             <input
               type="checkbox"
-              checked={selectedHashtags.includes(
-                hashtag.name
-              )}
-              onChange={() =>
-                toggleHashtag(hashtag.name)
-              }
+              checked={selectedHashtags.includes(hashtag.name)}
+              onChange={() => toggleHashtag(hashtag.name)}
             />
+
             #{hashtag.name}
           </label>
         ))}
@@ -486,35 +401,23 @@ export default function CreateNewsPage() {
         <input
           placeholder="Buscar equipo"
           value={teamSearch}
-          onChange={(e) =>
-            setTeamSearch(e.target.value)
-          }
+          onChange={(e) => setTeamSearch(e.target.value)}
         />
 
         <select
           value={selectedTeam}
-          onChange={(e) =>
-            setSelectedTeam(e.target.value)
-          }
+          onChange={(e) => setSelectedTeam(e.target.value)}
         >
-          <option value="">
-            Seleccionar equipo
-          </option>
+          <option value="">Seleccionar equipo</option>
 
           {filteredTeams.map((team) => (
-            <option
-              key={team._id}
-              value={team.name}
-            >
+            <option key={team._id} value={team.name}>
               {team.name}
             </option>
           ))}
         </select>
 
-        <button
-          type="button"
-          onClick={addTeam}
-        >
+        <button type="button" onClick={addTeam}>
           Agregar equipo
         </button>
 
@@ -525,11 +428,7 @@ export default function CreateNewsPage() {
             <button
               type="button"
               onClick={() =>
-                setTeams(
-                  teams.filter(
-                    (_, i) => i !== index
-                  )
-                )
+                setTeams(teams.filter((_, i) => i !== index))
               }
             >
               Eliminar
@@ -537,122 +436,8 @@ export default function CreateNewsPage() {
           </p>
         ))}
 
-        <h2>Secciones de la noticia</h2>
-
-        <select
-          value={sectionType}
-          onChange={(e) =>
-            setSectionType(
-              e.target.value as NewsSection['type']
-            )
-          }
-        >
-          <option value="text">Texto</option>
-          <option value="image-left">
-            Imagen izquierda
-          </option>
-          <option value="image-right">
-            Imagen derecha
-          </option>
-          <option value="image-full">
-            Imagen completa
-          </option>
-        </select>
-
-        {sectionType !== 'image-full' && (
-          <textarea
-            placeholder="Contenido de la sección"
-            value={sectionContent}
-            onChange={(e) =>
-              setSectionContent(e.target.value)
-            }
-            rows={6}
-          />
-        )}
-
-        {sectionType !== 'text' && (
-          <>
-            <select
-              value={sectionImage}
-              onChange={(e) =>
-                setSectionImage(e.target.value)
-              }
-            >
-              <option value="">
-                Seleccionar imagen de sección
-              </option>
-
-              {filteredMedia.map((media) => (
-                <option
-                  key={media._id}
-                  value={media.url}
-                >
-                  {media.name || 'Sin nombre'}
-                </option>
-              ))}
-            </select>
-
-            {sectionImage && (
-              <img
-                src={sectionImage}
-                alt=""
-                className="section-image-preview"
-              />
-            )}
-          </>
-        )}
-
-        <button
-          type="button"
-          onClick={addSection}
-        >
-          Agregar sección
-        </button>
-
-        <p>Secciones creadas: {sections.length}</p>
-
-        {sections.map((section, index) => (
-          <div
-            key={index}
-            className="section-preview"
-          >
-            <strong>{section.type}</strong>
-
-            {'content' in section && (
-              <p>{section.content}</p>
-            )}
-
-            {'image' in section &&
-              section.image && (
-                <img
-                  src={section.image}
-                  alt=""
-                  className="section-image-preview"
-                />
-              )}
-
-            <button
-              type="button"
-              onClick={() =>
-                setSections(
-                  sections.filter(
-                    (_, i) => i !== index
-                  )
-                )
-              }
-            >
-              Eliminar sección
-            </button>
-          </div>
-        ))}
-
-        <button
-          type="submit"
-          disabled={saving}
-        >
-          {saving
-            ? 'Creando...'
-            : 'Crear noticia'}
+        <button type="submit" disabled={saving}>
+          {saving ? 'Creando...' : 'Crear noticia'}
         </button>
       </form>
     </div>

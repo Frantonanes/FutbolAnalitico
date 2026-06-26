@@ -273,69 +273,62 @@ export default function NewsDetailPage() {
             )}
 
             <div className="news-detail__content">
-              {news.sections.length === 0 ? (
-                <p className="news-detail__text">
-                  Esta noticia todavía no tiene contenido.
-                </p>
-              ) : (
-                news.sections.map((section, index) => {
-                  switch (section.type) {
-                    case 'text':
-                      return (
-                        <p
-                          key={index}
-                          className="news-detail__text"
-                        >
-                          {section.content}
-                        </p>
-                      )
+  {news.content ? (
+    <div
+      className="news-detail__rich-content"
+      dangerouslySetInnerHTML={{
+        __html: news.content
+      }}
+    />
+  ) : !news.sections || news.sections.length === 0 ? (
+    <p className="news-detail__text">
+      Esta noticia todavía no tiene contenido.
+    </p>
+  ) : (
+    news.sections.map((section, index) => {
+      switch (section.type) {
+        case 'text':
+          return (
+            <p key={index} className="news-detail__text">
+              {section.content}
+            </p>
+          )
 
-                    case 'image-right':
-                      return (
-                        <section
-                          key={index}
-                          className="news-detail__section"
-                        >
-                          <p>{section.content}</p>
+        case 'image-right':
+          return (
+            <section key={index} className="news-detail__section">
+              <p>{section.content}</p>
+              <img src={section.image} alt="" />
+            </section>
+          )
 
-                          <img
-                            src={section.image}
-                            alt=""
-                          />
-                        </section>
-                      )
+        case 'image-left':
+          return (
+            <section
+              key={index}
+              className="news-detail__section news-detail__section--reverse"
+            >
+              <img src={section.image} alt="" />
+              <p>{section.content}</p>
+            </section>
+          )
 
-                    case 'image-left':
-                      return (
-                        <section
-                          key={index}
-                          className="news-detail__section news-detail__section--reverse"
-                        >
-                          <img
-                            src={section.image}
-                            alt=""
-                          />
+        case 'image-full':
+          return (
+            <img
+              key={index}
+              className="news-detail__image-full"
+              src={section.image}
+              alt=""
+            />
+          )
 
-                          <p>{section.content}</p>
-                        </section>
-                      )
-
-                    case 'image-full':
-                      return (
-                        <img
-                          key={index}
-                          className="news-detail__image-full"
-                          src={section.image}
-                          alt=""
-                        />
-                      )
-
-                    default:
-                      return null
-                  }
-                })
-              )}
-            </div>
+        default:
+          return null
+      }
+    })
+  )}
+</div>
 
             {news.hashtags?.length > 0 && (
               <div className="news-detail__hashtags">
