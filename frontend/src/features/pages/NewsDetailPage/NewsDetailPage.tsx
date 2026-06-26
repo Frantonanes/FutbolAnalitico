@@ -4,6 +4,7 @@ import {
   useParams
 } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
+import DOMPurify from 'dompurify'
 
 import type { News } from '../../../shared/types/News'
 import { getNewsBySlug } from '../../../services/newsService'
@@ -277,8 +278,8 @@ export default function NewsDetailPage() {
     <div
       className="news-detail__rich-content"
       dangerouslySetInnerHTML={{
-        __html: news.content
-      }}
+  __html: DOMPurify.sanitize(news.content)
+}}
     />
   ) : !news.sections || news.sections.length === 0 ? (
     <p className="news-detail__text">

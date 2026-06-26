@@ -391,11 +391,11 @@ export default function EditNewsPage() {
 
         <h2>Hashtags</h2>
 
-<HashtagSelector
-  options={hashtagOptions}
-  selected={selectedHashtags}
-  onChange={setSelectedHashtags}
-/>
+        <HashtagSelector
+          options={hashtagOptions}
+          selected={selectedHashtags}
+          onChange={setSelectedHashtags}
+        />
 
         <h2>Equipos relacionados</h2>
 
